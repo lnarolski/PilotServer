@@ -43,9 +43,15 @@ namespace ServerApp
         [DllImport("user32.dll")]
         static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
 
+        static public int quadraticFunction(double x)
+        {
+            const int coefficient1 = 1;
+            const int coefficient2 = 5;
+            return (x < 0.0 ? -1 : 1) * ((((int)Math.Ceiling(x * x)) * coefficient1) + (((int)Math.Ceiling((x < 0.0 ? -1.0 : 1.0) * x)) * coefficient2));
+        }
+
         static void Main(string[] args)
         {
-            const int moveMouseSpeed = 10;
             TcpListener serwer;
             TcpClient klient;
             try
@@ -80,7 +86,10 @@ namespace ServerApp
                         {
                             case Commands.SEND_TEXT:
                                 responseData = System.Text.Encoding.UTF8.GetString(data, 4, bytes - 4);
-                                SendKeys.SendWait(responseData);
+                                if (responseData == "\n")
+                                    SendKeys.SendWait("{ENTER}");
+                                else
+                                    SendKeys.SendWait(responseData);
                                 Console.WriteLine("{0} Komenda: {1} Wiadomość: \"{2}\"", DateTime.Now.ToString("HH:mm:ss"), command.ToString(), responseData);
                                 break;
                             case Commands.SEND_BACKSPACE:
@@ -104,8 +113,7 @@ namespace ServerApp
                             case Commands.SEND_MOVE_MOUSE:
                                 double moveX = BitConverter.ToDouble(data, 4);
                                 double moveY = BitConverter.ToDouble(data, 12);
-                                //Cursor cursor = new Cursor(Cursor.Current.Handle);
-                                Cursor.Position = new Point(Cursor.Position.X + ((int) moveX * moveMouseSpeed), Cursor.Position.Y + ((int) moveY * moveMouseSpeed));
+                                Cursor.Position = new Point(Cursor.Position.X + quadraticFunction(moveX), Cursor.Position.Y + quadraticFunction(moveY));
                                 Console.WriteLine("{0} Komenda: {1} Przesunięcie: {2} {3}", DateTime.Now.ToString("HH:mm:ss"), command.ToString(), moveX, moveY);
                                 break;
                             default:
