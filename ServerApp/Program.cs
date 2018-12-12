@@ -43,11 +43,11 @@ namespace ServerApp
         [DllImport("user32.dll")]
         static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
 
-        static public int quadraticFunction(double x)
+        static public int quadraticFunction(double x) //DODAĆ INERCJĘ I RZĘDU
         {
-            const int coefficient1 = 1;
-            const int coefficient2 = 5;
-            return (x < 0.0 ? -1 : 1) * ((((int)Math.Ceiling(x * x)) * coefficient1) + (((int)Math.Ceiling((x < 0.0 ? -1.0 : 1.0) * x)) * coefficient2));
+            const double coefficient1 = 0.8;
+            const double coefficient2 = 1.0;
+            return (x < 0.0 ? -1 : 1) * ((int)(((int)Math.Ceiling(x * x)) * coefficient1) + (int)(((int)Math.Ceiling((x < 0.0 ? -1.0 : 1.0) * x)) * coefficient2));
         }
 
         static void Main(string[] args)
@@ -114,7 +114,7 @@ namespace ServerApp
                                 double moveX = BitConverter.ToDouble(data, 4);
                                 double moveY = BitConverter.ToDouble(data, 12);
                                 Cursor.Position = new Point(Cursor.Position.X + quadraticFunction(moveX), Cursor.Position.Y + quadraticFunction(moveY));
-                                Console.WriteLine("{0} Komenda: {1} Przesunięcie: {2} {3}", DateTime.Now.ToString("HH:mm:ss"), command.ToString(), moveX, moveY);
+                                Console.WriteLine("{0} Komenda: {1} Przesunięcie: {2} {3}", DateTime.Now.ToString("HH:mm:ss"), command.ToString(), quadraticFunction(moveX), quadraticFunction(moveY));
                                 break;
                             default:
                                 break;
