@@ -13,10 +13,8 @@ namespace ServerApp
 {
     class Program
     {
-        // See http://www.pinvoke.net/default.aspx/user32/mouse_event.html
-        // Mouse event flags.
         [Flags]
-        public enum MouseEventFlags : uint
+        public enum MouseEventFlags : uint //flagi odpowiedzialne za akcje myszy
         {
             LEFTDOWN = 0x00000002,
             LEFTUP = 0x00000004,
@@ -31,19 +29,10 @@ namespace ServerApp
             XUP = 0x00000100
         }
 
-        // Use the values of this enum for the 'dwData' parameter
-        // to specify an X button when using MouseEventFlags.XDOWN or
-        // MouseEventFlags.XUP for the dwFlags parameter.
-        public enum MouseEventDataXButtons : uint
-        {
-            XBUTTON1 = 0x00000001,
-            XBUTTON2 = 0x00000002
-        }
-
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll")] //dołączenie biblioteki pozwalającej na ingerencję w akcje generowane przez mysz
         static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
 
-        static public int quadraticFunction(double x) //DODAĆ INERCJĘ I RZĘDU
+        static public int quadraticFunction(double x) //funkcja kwadratowa do lepszej jakości sterowania kursorem TODO: DODAĆ INERCJĘ I RZĘDU
         {
             const double coefficient1 = 0.8;
             const double coefficient2 = 1.0;
@@ -56,12 +45,6 @@ namespace ServerApp
             TcpClient klient;
             try
             {
-                String strHostName = string.Empty;
-                strHostName = Dns.GetHostName();
-                IPHostEntry ipEntry = Dns.GetHostEntry(strHostName);
-                IPAddress[] addr = ipEntry.AddressList;
-                //IPAddress adres_ip = IPAddress.Parse(addr[3].ToString());
-                //IPAddress adres_ip = IPAddress.Parse("127.0.0.1");
                 IPAddress adres_ip = IPAddress.Any;
                 System.Console.WriteLine("{0} Serwer uruchomiony.\n{0} Dane do polaczenia: {1}:1234", DateTime.Now.ToString("HH:mm:ss"), adres_ip.ToString());
                 serwer = new TcpListener(adres_ip, 1234);
@@ -73,18 +56,15 @@ namespace ServerApp
                         klient = serwer.AcceptTcpClient();
                         System.Console.WriteLine("{0} Polaczono z klientem.", DateTime.Now.ToString("HH:mm:ss"));
                         NetworkStream stream = klient.GetStream();
-                        // Buffer to store the response bytes.
-                        Byte[] data = new Byte[9999];
-
-                        // String to store the response ASCII representation.
-                        String responseData = String.Empty;
-
-                        // Read the first batch of the TcpServer response bytes.
-                        Int32 bytes = stream.Read(data, 0, data.Length);
-                        Commands command = (Commands) BitConverter.ToInt32(data, 0);
+                        Byte[] data = new Byte[9999]; //bufor do odbioru bajtów danych
+                        
+                        String responseData = String.Empty; //string wykorzystywany do przechowywania odebranych tekstów
+                        
+                        Int32 bytes = stream.Read(data, 0, data.Length); //odczyt danych z bufora
+                        Commands command = (Commands) BitConverter.ToInt32(data, 0); //wyodrębnienie odebranej komendy
                         switch (command)
                         {
-                            case Commands.SEND_TEXT:
+                            case Commands.SEND_TEXT: //odebranie tekstu
                                 responseData = System.Text.Encoding.UTF8.GetString(data, 4, bytes - 4);
                                 if (responseData == "\n")
                                     SendKeys.SendWait("{ENTER}");
@@ -92,25 +72,25 @@ namespace ServerApp
                                     SendKeys.SendWait(responseData);
                                 Console.WriteLine("{0} Komenda: {1} Wiadomość: \"{2}\"", DateTime.Now.ToString("HH:mm:ss"), command.ToString(), responseData);
                                 break;
-                            case Commands.SEND_BACKSPACE:
+                            case Commands.SEND_BACKSPACE: //odebranie klawisza BACKSPACE
                                 SendKeys.SendWait("{BACKSPACE}");
                                 Console.WriteLine("{0} Komenda: {1}", DateTime.Now.ToString("HH:mm:ss"), command.ToString());
                                 break;
-                            case Commands.SEND_LEFT_MOUSE:
+                            case Commands.SEND_LEFT_MOUSE: //odebranie lewego przycisku myszy
                                 mouse_event(
                                     (uint)(MouseEventFlags.MOVE |
                                         MouseEventFlags.LEFTDOWN | MouseEventFlags.LEFTUP),
                                     0, 0, 0, 0);
                                 Console.WriteLine("{0} Komenda: {1}", DateTime.Now.ToString("HH:mm:ss"), command.ToString());
                                 break;
-                            case Commands.SEND_RIGHT_MOUSE:
+                            case Commands.SEND_RIGHT_MOUSE: //odebranie prawego przycisku myszy
                                 mouse_event(
                                     (uint)(MouseEventFlags.MOVE |
                                         MouseEventFlags.RIGHTDOWN | MouseEventFlags.RIGHTUP),
                                     0, 0, 0, 0);
                                 Console.WriteLine("{0} Komenda: {1}", DateTime.Now.ToString("HH:mm:ss"), command.ToString());
                                 break;
-                            case Commands.SEND_MOVE_MOUSE:
+                            case Commands.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
                                 double moveX = BitConverter.ToDouble(data, 4);
                                 double moveY = BitConverter.ToDouble(data, 12);
                                 Cursor.Position = new Point(Cursor.Position.X + quadraticFunction(moveX), Cursor.Position.Y + quadraticFunction(moveY));
@@ -120,7 +100,6 @@ namespace ServerApp
                                 break;
                         }
 
-                        //// Close everything.
                         stream.Close();
                         klient.Close();
                     }
