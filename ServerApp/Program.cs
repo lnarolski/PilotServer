@@ -98,14 +98,14 @@ namespace ServerApp
                                 break;
                             case Commands.SEND_LEFT_MOUSE:
                                 mouse_event(
-                                    (uint)(MouseEventFlags.ABSOLUTE | MouseEventFlags.MOVE |
+                                    (uint)(MouseEventFlags.MOVE |
                                         MouseEventFlags.LEFTDOWN | MouseEventFlags.LEFTUP),
                                     0, 0, 0, 0);
                                 Console.WriteLine("{0} Komenda: {1}", DateTime.Now.ToString("HH:mm:ss"), command.ToString());
                                 break;
                             case Commands.SEND_RIGHT_MOUSE:
                                 mouse_event(
-                                    (uint)(MouseEventFlags.ABSOLUTE | MouseEventFlags.MOVE |
+                                    (uint)(MouseEventFlags.MOVE |
                                         MouseEventFlags.RIGHTDOWN | MouseEventFlags.RIGHTUP),
                                     0, 0, 0, 0);
                                 Console.WriteLine("{0} Komenda: {1}", DateTime.Now.ToString("HH:mm:ss"), command.ToString());
