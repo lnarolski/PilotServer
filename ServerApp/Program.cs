@@ -8,6 +8,7 @@ using System.Net;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using ServiceDiscovery;
 
 namespace ServerApp
 {
@@ -54,18 +55,29 @@ namespace ServerApp
         {
             TcpListener serwer;
             TcpClient klient;
+            const short port = 1234;
             try
             {
                 String strHostName = string.Empty;
                 strHostName = Dns.GetHostName();
                 IPHostEntry ipEntry = Dns.GetHostEntry(strHostName);
                 IPAddress[] addr = ipEntry.AddressList;
-                //IPAddress adres_ip = IPAddress.Parse(addr[3].ToString());
-                //IPAddress adres_ip = IPAddress.Parse("127.0.0.1");
                 IPAddress adres_ip = IPAddress.Any;
                 System.Console.WriteLine("{0} Serwer uruchomiony.\n{0} Dane do polaczenia: {1}:1234", DateTime.Now.ToString("HH:mm:ss"), adres_ip.ToString());
-                serwer = new TcpListener(adres_ip, 1234);
+                serwer = new TcpListener(adres_ip, port);
                 serwer.Start();
+
+                ////////////////////Zeroconf////////////////////
+                /////////Murillo/Service-Mono.ZeroConf//////////
+                Types type = new Types(); //Utworzenie klasy zawieracjącej parametry konfiguracyjne Zeroconf
+                type.Name = "Pilot Server"; //Nazwa usługi
+                type.RegType = "_pilotServer._tcp"; //Typ usługi
+                type.Domain = "local."; //Domena
+                type.Port = port; //Port
+                Register register = new Register(); //Utworzenie obiektu usługi Zeroconf
+                register.RegisterService(type); //Uruchomienie Zeroconf z powyższą konfiguracją
+                ///////////////////////////////////////////////
+
                 while (true)
                 {
                     try
