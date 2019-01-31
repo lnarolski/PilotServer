@@ -54,12 +54,20 @@ namespace ServerApp
                 serwer = new TcpListener(adres_ip, port);
 
                 //////////////////////Zeroconf////////////////////
-                RegisterService service = new RegisterService();
-                service.Name = "Pilot Server";
-                service.RegType = "_pilotServer._tcp";
-                service.ReplyDomain = "local.";
-                service.Port = 1234;
-                service.Register();
+                try
+                {
+                    RegisterService service = new RegisterService();
+                    service.Name = "Pilot Server";
+                    service.RegType = "_pilotServer._tcp";
+                    service.ReplyDomain = "local.";
+                    service.Port = 1234;
+                    service.Register();
+                }
+                catch (Exception e)
+                {
+                    Console.Write("{0} ", DateTime.Now.ToString("HH:mm:ss"));
+                    Console.WriteLine(e.ToString());
+                }
                 //////////////////////////////////////////////////
 
                 serwer.Start();
