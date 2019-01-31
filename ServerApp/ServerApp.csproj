@@ -54,9 +54,13 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ServiceDiscovery\ServiceDiscovery.csproj">
-      <Project>{ed2e55e0-ecc2-4fe8-bbde-536eb665cb9a}</Project>
-      <Name>ServiceDiscovery</Name>
+    <ProjectReference Include="..\Mono.Zeroconf.Providers.Bonjour\Mono.Zeroconf.Providers.Bonjour.csproj">
+      <Project>{623325e2-5821-4701-a40c-3759097008dd}</Project>
+      <Name>Mono.Zeroconf.Providers.Bonjour</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Mono.Zeroconf\Mono.Zeroconf.csproj">
+      <Project>{5cf88e3a-13dd-4114-bad9-da826946516f}</Project>
+      <Name>Mono.Zeroconf</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
