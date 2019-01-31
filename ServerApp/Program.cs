@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Runtime.InteropServices;
-//using ServiceDiscovery;
 using Mono.Zeroconf;
-using System.Threading.Tasks;
 
 namespace ServerApp
 {
@@ -56,12 +50,12 @@ namespace ServerApp
                 //////////////////////Zeroconf////////////////////
                 try
                 {
-                    RegisterService service = new RegisterService();
-                    service.Name = "Pilot Server";
-                    service.RegType = "_pilotServer._tcp";
-                    service.ReplyDomain = "local.";
-                    service.Port = 1234;
-                    service.Register();
+                    RegisterService service = new RegisterService(); //Utworzenie obiektu odpowiedzialnego za działanie grupy technik Zeroconf
+                    service.Name = "Pilot Server"; //Nazwa usługi
+                    service.RegType = "_pilotServer._tcp"; //Typ usługi
+                    service.ReplyDomain = "local."; //Domena
+                    service.Port = 1234; //Port
+                    service.Register(); //Uruchomienie Zeroconf z powyższą konfiguracją
                 }
                 catch (Exception e)
                 {
