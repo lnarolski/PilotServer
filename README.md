@@ -10,3 +10,4 @@ Zadaniem aplikacji jest kontrola działania myszki i klawiatury na komputerze z 
 - Dodanie obsługi poleceń otwarcia konkretnych stron WWW
 - Dodanie ukrywania konoli w zasobniku podczas minimalizacji
 - Ogólne przystosowanie działania do potrzeb zwykłego użytkownika (np. wyłączenie całego debuggowania)
+- Dodanie obługi odszyfrowywania odbieranych pakietów
