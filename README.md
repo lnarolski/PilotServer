@@ -6,7 +6,7 @@ Klient znajduje się [tutaj](https://github.com/lnarolski/Pilot).
 Zadaniem aplikacji jest kontrola działania myszki i klawiatury na komputerze z zainstalowanym systemem Windows. Do poprawnej pracy należy doinstalować następujące elementy:
 * [Usługa Bonjour](https://support.apple.com/kb/DL999)
 
-# TODO:
+# TODO
 - Dodanie obsługi poleceń otwarcia konkretnych stron WWW
 - Dodanie ukrywania konoli w zasobniku podczas minimalizacji
 - Ogólne przystosowanie działania do potrzeb zwykłego użytkownika (np. wyłączenie całego debuggowania)
