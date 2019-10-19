@@ -13,5 +13,11 @@ namespace ServerApp
         SEND_MOVE_MOUSE,
         SEND_LEFT_MOUSE,
         SEND_RIGHT_MOUSE,
+        SEND_PREVIOUS,
+        SEND_PLAYSTOP,
+        SEND_NEXT,
+        SEND_VOLDOWN,
+        SEND_STOP,
+        SEND_VOLUP
     }
 }

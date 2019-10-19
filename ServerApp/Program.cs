@@ -25,9 +25,20 @@ namespace ServerApp
             XDOWN = 0x00000080,
             XUP = 0x00000100
         }
+        public enum KeyboardEventFlags : uint //flagi odpowiedzialne za akcje klawiatury
+        {
+            PLAYPAUSE = 0xB3,
+            NEXT = 0xB0,
+            PREV = 0xB1,
+            STOP = 0xB2,
+            VOLUP = 0xAF,
+            VOLDOWN = 0xAE
+        }
 
         [DllImport("user32.dll")] //dołączenie biblioteki pozwalającej na ingerencję w akcje generowane przez mysz
         static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
+        [DllImport("user32.dll")] //dołączenie biblioteki pozwalającej na ingerencję w akcje generowane przez klawiaturę
+        static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
 
         static public int quadraticFunction(double x) //funkcja kwadratowa do lepszej jakości sterowania kursorem TODO: DODAĆ INERCJĘ I RZĘDU
         {
@@ -111,6 +122,24 @@ namespace ServerApp
                                 double moveY = BitConverter.ToDouble(data, 12);
                                 Cursor.Position = new Point(Cursor.Position.X + quadraticFunction(moveX), Cursor.Position.Y + quadraticFunction(moveY));
                                 Console.WriteLine("{0} Komenda: {1} Przesunięcie: {2} {3}", DateTime.Now.ToString("HH:mm:ss"), command.ToString(), quadraticFunction(moveX), quadraticFunction(moveY));
+                                break;
+                            case Commands.SEND_NEXT:
+                                keybd_event((byte) KeyboardEventFlags.NEXT, 0, 0, 0);
+                                break;
+                            case Commands.SEND_PREVIOUS:
+                                keybd_event((byte) KeyboardEventFlags.PREV, 0, 0, 0);
+                                break;
+                            case Commands.SEND_STOP:
+                                keybd_event((byte) KeyboardEventFlags.STOP, 0, 0, 0);
+                                break;
+                            case Commands.SEND_PLAYSTOP:
+                                keybd_event((byte) KeyboardEventFlags.PLAYPAUSE, 0, 0, 0);
+                                break;
+                            case Commands.SEND_VOLDOWN:
+                                keybd_event((byte) KeyboardEventFlags.VOLDOWN, 0, 0, 0);
+                                break;
+                            case Commands.SEND_VOLUP:
+                                keybd_event((byte) KeyboardEventFlags.VOLUP, 0, 0, 0);
                                 break;
                             default:
                                 break;
