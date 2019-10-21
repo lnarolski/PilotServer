@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using Mono.Zeroconf;
 using System.Text;
 using System.Linq;
+using System.IO;
 
 namespace ServerApp
 {
@@ -51,14 +52,45 @@ namespace ServerApp
 
         static void Main(string[] args)
         {
-            TcpListener serwer;
-            TcpClient klient;
-            const short port = 1234;
+            TcpListener server;
+            TcpClient client;
+            short port = 1234;
+            string password = "testowehaslo1234";
+
+            if (!File.Exists("config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
+            {
+                StreamWriter ConfigFile = File.CreateText("config.ini");
+                ConfigFile.WriteLine("PORT=" + port.ToString());
+                ConfigFile.WriteLine("PASSWORD=" + password.ToString());
+                ConfigFile.Close();
+            }
+            else
+            {
+                StreamReader ConfigFile = File.OpenText("config.ini");
+                string ConfigFileLine;
+                while ((ConfigFileLine = ConfigFile.ReadLine()) != null)
+                {
+                    string[] value = ConfigFileLine.Split('=');
+                    switch (value[0])
+                    {
+                        case "PORT":
+                            port = short.Parse(value[1]);
+                            break;
+                        case "PASSWORD":
+                            password = value[1];
+                            break;
+                        default:
+                            System.Console.WriteLine("{0} NIEPRAWIDLOWY ODCZYT Z PLIKU config.ini", DateTime.Now.ToString("HH:mm:ss"));
+                            break;
+                    }
+                }
+            }
+
             try
             {
                 IPAddress adres_ip = IPAddress.Any;
-                System.Console.WriteLine("{0} Serwer uruchomiony.\n{0} Dane do polaczenia: {1}:1234", DateTime.Now.ToString("HH:mm:ss"), adres_ip.ToString());
-                serwer = new TcpListener(adres_ip, port);
+                System.Console.WriteLine("{0} Serwer uruchomiony.\n{0} Dane do polaczenia: {1}:{2}", DateTime.Now.ToString("HH:mm:ss"), adres_ip.ToString(), port.ToString());
+                server = new TcpListener(adres_ip, port);
 
                 //////////////////////Zeroconf////////////////////
                 try
@@ -67,7 +99,7 @@ namespace ServerApp
                     service.Name = "Pilot Server"; //Nazwa usługi
                     service.RegType = "_pilotServer._tcp"; //Typ usługi
                     service.ReplyDomain = "local."; //Domena
-                    service.Port = 1234; //Port
+                    service.Port = port; //Port
                     service.Register(); //Uruchomienie Zeroconf z powyższą konfiguracją
                 }
                 catch (Exception e)
@@ -77,14 +109,14 @@ namespace ServerApp
                 }
                 //////////////////////////////////////////////////
 
-                serwer.Start();
+                server.Start();
                 while (true)
                 {
                     try
                     {
-                        klient = serwer.AcceptTcpClient();
+                        client = server.AcceptTcpClient();
                         System.Console.WriteLine("{0} Polaczono z klientem.", DateTime.Now.ToString("HH:mm:ss"));
-                        NetworkStream stream = klient.GetStream();
+                        NetworkStream stream = client.GetStream();
                         Byte[] data = new Byte[9999]; //bufor do odbioru bajtów danych
                         
                         String responseData = String.Empty; //string wykorzystywany do przechowywania odebranych tekstów
@@ -125,30 +157,30 @@ namespace ServerApp
                                 Cursor.Position = new Point(Cursor.Position.X + quadraticFunction(moveX), Cursor.Position.Y + quadraticFunction(moveY));
                                 Console.WriteLine("{0} Komenda: {1} Przesunięcie: {2} {3}", DateTime.Now.ToString("HH:mm:ss"), command.ToString(), quadraticFunction(moveX), quadraticFunction(moveY));
                                 break;
-                            case Commands.SEND_NEXT:
+                            case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
                                 keybd_event((byte) KeyboardEventFlags.NEXT, 0, 0, 0);
                                 break;
-                            case Commands.SEND_PREVIOUS:
+                            case Commands.SEND_PREVIOUS: //odebranie polecenia odtworzenia poprzedniego utworu
                                 keybd_event((byte) KeyboardEventFlags.PREV, 0, 0, 0);
                                 break;
-                            case Commands.SEND_STOP:
+                            case Commands.SEND_STOP: //odebranie polecenia zatrzymania odtwarzania
                                 keybd_event((byte) KeyboardEventFlags.STOP, 0, 0, 0);
                                 break;
-                            case Commands.SEND_PLAYSTOP:
+                            case Commands.SEND_PLAYSTOP: //odebranie polecenia wstrzymania/wznowienia odtwarzania
                                 keybd_event((byte) KeyboardEventFlags.PLAYPAUSE, 0, 0, 0);
                                 break;
-                            case Commands.SEND_VOLDOWN:
+                            case Commands.SEND_VOLDOWN: //odebranie polecenia podgłośnienia
                                 keybd_event((byte) KeyboardEventFlags.VOLDOWN, 0, 0, 0);
                                 break;
-                            case Commands.SEND_VOLUP:
+                            case Commands.SEND_VOLUP: //odebranie polecenia ściszenia
                                 keybd_event((byte) KeyboardEventFlags.VOLUP, 0, 0, 0);
                                 break;
-                            case Commands.SEND_OPEN_WEBPAGE:
+                            case Commands.SEND_OPEN_WEBPAGE:  //odebranie polecenia otwarcia strony internetowej
                                 System.Diagnostics.Process process = new System.Diagnostics.Process();
                                 System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                                 startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
                                 startInfo.FileName = "cmd.exe";
-                                startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(data.Skip(4).ToArray()).Trim('\0') + "\"";
+                                startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(data.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
                                 process.StartInfo = startInfo;
                                 process.Start();
                                 break;
@@ -157,7 +189,7 @@ namespace ServerApp
                         }
 
                         stream.Close();
-                        klient.Close();
+                        client.Close();
                     }
                     catch (Exception error)
                     {
