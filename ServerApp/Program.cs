@@ -54,37 +54,45 @@ namespace ServerApp
         {
             TcpListener server;
             TcpClient client;
-            short port = 1234;
+            short port = 1234; //Zakres short jest wymuszany przez Zeroconf
             string password = "testowehaslo1234";
 
-            if (!File.Exists("config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
+            try
             {
-                StreamWriter ConfigFile = File.CreateText("config.ini");
-                ConfigFile.WriteLine("PORT=" + port.ToString());
-                ConfigFile.WriteLine("PASSWORD=" + password.ToString());
-                ConfigFile.Close();
-            }
-            else
-            {
-                StreamReader ConfigFile = File.OpenText("config.ini");
-                string ConfigFileLine;
-                while ((ConfigFileLine = ConfigFile.ReadLine()) != null)
+                if (!File.Exists("config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
                 {
-                    string[] value = ConfigFileLine.Split('=');
-                    switch (value[0])
-                    {
-                        case "PORT":
-                            port = short.Parse(value[1]);
-                            break;
-                        case "PASSWORD":
-                            password = value[1];
-                            break;
-                        default:
-                            System.Console.WriteLine("{0} NIEPRAWIDLOWY ODCZYT Z PLIKU config.ini", DateTime.Now.ToString("HH:mm:ss"));
-                            break;
-                    }
+                    StreamWriter ConfigFile = File.CreateText("config.ini");
+                    ConfigFile.WriteLine("PORT=" + port.ToString());
+                    ConfigFile.WriteLine("PASSWORD=" + password.ToString());
+                    ConfigFile.Close();
                 }
-                ConfigFile.Close();
+                else
+                {
+                    StreamReader ConfigFile = File.OpenText("config.ini");
+                    string ConfigFileLine;
+                    while ((ConfigFileLine = ConfigFile.ReadLine()) != null)
+                    {
+                        string[] value = ConfigFileLine.Split('=');
+                        switch (value[0])
+                        {
+                            case "PORT":
+                                port = short.Parse(value[1]);
+                                break;
+                            case "PASSWORD":
+                                password = value[1];
+                                break;
+                            default:
+                                System.Console.WriteLine("{0} NIEPRAWIDLOWY ODCZYT Z PLIKU config.ini", DateTime.Now.ToString("HH:mm:ss"));
+                                break;
+                        }
+                    }
+                    ConfigFile.Close();
+                }
+            }
+            catch (Exception error)
+            {
+                Console.Write("{0} ", DateTime.Now.ToString("HH:mm:ss"));
+                System.Console.WriteLine(error.ToString());
             }
 
             try
