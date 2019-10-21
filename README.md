@@ -7,6 +7,5 @@ Zadaniem aplikacji jest kontrola działania myszki i klawiatury na komputerze z 
 * [Usługa Bonjour](https://support.apple.com/kb/DL999)
 
 # TODO
-- Dodanie obsługi poleceń otwarcia konkretnych stron WWW
 - Instalowanie aplikacji w systemie jako usługa
 - Dodanie obługi odszyfrowywania odbieranych pakietów
