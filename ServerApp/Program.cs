@@ -84,6 +84,7 @@ namespace ServerApp
                             break;
                     }
                 }
+                ConfigFile.Close();
             }
 
             try
