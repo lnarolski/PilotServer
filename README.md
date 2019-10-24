@@ -8,4 +8,3 @@ Zadaniem aplikacji jest kontrola działania myszki i klawiatury na komputerze z 
 
 # TODO
 - Instalowanie aplikacji w systemie jako usługa
-- Dodanie obługi odszyfrowywania odbieranych pakietów

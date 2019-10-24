@@ -8,6 +8,7 @@ using Mono.Zeroconf;
 using System.Text;
 using System.Linq;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace ServerApp
 {
@@ -48,6 +49,17 @@ namespace ServerApp
             const double coefficient1 = 0.8;
             const double coefficient2 = 1.0;
             return (x < 0.0 ? -1 : 1) * ((int)(((int)Math.Ceiling(x * x)) * coefficient1) + (int)(((int)Math.Ceiling((x < 0.0 ? -1.0 : 1.0) * x)) * coefficient2));
+        }
+
+        private static byte[] GenerateSalt(int size, string password)
+        {
+            var buffer = new byte[size];
+            var passBytes = ASCIIEncoding.ASCII.GetBytes(password);
+
+            if (passBytes.Length > buffer.Length) Array.Copy(passBytes, buffer, buffer.Length);
+            else Array.Copy(passBytes, buffer, passBytes.Length);
+
+            return buffer;
         }
 
         static void Main(string[] args)
@@ -101,6 +113,11 @@ namespace ServerApp
                 System.Console.WriteLine("{0} Serwer uruchomiony.\n{0} Dane do polaczenia: {1}:{2}", DateTime.Now.ToString("HH:mm:ss"), adres_ip.ToString(), port.ToString());
                 server = new TcpListener(adres_ip, port);
 
+                AesCryptoServiceProvider _aes;
+                _aes = new AesCryptoServiceProvider();
+                _aes.KeySize = 256;
+                _aes.BlockSize = 128;
+
                 //////////////////////Zeroconf////////////////////
                 try
                 {
@@ -126,16 +143,53 @@ namespace ServerApp
                         client = server.AcceptTcpClient();
                         System.Console.WriteLine("{0} Polaczono z klientem.", DateTime.Now.ToString("HH:mm:ss"));
                         NetworkStream stream = client.GetStream();
-                        Byte[] data = new Byte[9999]; //bufor do odbioru bajtów danych
+                        Byte[] buffer = new Byte[9999]; //bufor do odbioru bajtów danych
                         
                         String responseData = String.Empty; //string wykorzystywany do przechowywania odebranych tekstów
                         
-                        Int32 bytes = stream.Read(data, 0, data.Length); //odczyt danych z bufora
-                        Commands command = (Commands) BitConverter.ToInt32(data, 0); //wyodrębnienie odebranej komendy
+                        Int32 bytes = stream.Read(buffer, 0, buffer.Length); //odczyt danych z bufora
+
+                        Byte[] data = new Byte[bytes];
+                        Array.Copy(buffer, data, bytes);
+                        Byte[] dataDecoded;
+
+                        try
+                        {
+                            using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
+                            {
+                                using (var MemoryStream = new MemoryStream())
+                                {
+                                    _aes.Key = pass.GetBytes(_aes.KeySize / 8);
+                                    _aes.IV = pass.GetBytes(_aes.BlockSize / 8);
+
+                                    var proc = _aes.CreateDecryptor();
+                                    using (var crypto = new CryptoStream(MemoryStream, proc, CryptoStreamMode.Write))
+                                    {
+                                        crypto.Write(data, 0, data.Length);
+                                        crypto.Clear();
+                                        crypto.Close();
+                                    }
+                                    MemoryStream.Close();
+
+                                    dataDecoded = MemoryStream.ToArray();
+                                }
+                            }
+                        }
+                        catch (Exception error)
+                        {
+                            Console.Write("{0} NIEPRAWIDLOWE HASLO W KONFIGURACJI KLIENTA: ", DateTime.Now.ToString("HH:mm:ss"));
+                            System.Console.WriteLine(error.ToString());
+                            continue;
+                        }
+
+                        if (dataDecoded.Length == 0)
+                            continue;
+
+                        Commands command = (Commands) BitConverter.ToInt32(dataDecoded, 0); //wyodrębnienie odebranej komendy
                         switch (command)
                         {
                             case Commands.SEND_TEXT: //odebranie tekstu
-                                responseData = System.Text.Encoding.UTF8.GetString(data, 4, bytes - 4);
+                                responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, bytes - 4);
                                 if (responseData == "\n")
                                     SendKeys.SendWait("{ENTER}");
                                 else
@@ -161,8 +215,8 @@ namespace ServerApp
                                 Console.WriteLine("{0} Komenda: {1}", DateTime.Now.ToString("HH:mm:ss"), command.ToString());
                                 break;
                             case Commands.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
-                                double moveX = BitConverter.ToDouble(data, 4);
-                                double moveY = BitConverter.ToDouble(data, 12);
+                                double moveX = BitConverter.ToDouble(dataDecoded, 4);
+                                double moveY = BitConverter.ToDouble(dataDecoded, 12);
                                 Cursor.Position = new Point(Cursor.Position.X + quadraticFunction(moveX), Cursor.Position.Y + quadraticFunction(moveY));
                                 Console.WriteLine("{0} Komenda: {1} Przesunięcie: {2} {3}", DateTime.Now.ToString("HH:mm:ss"), command.ToString(), quadraticFunction(moveX), quadraticFunction(moveY));
                                 break;
@@ -189,7 +243,7 @@ namespace ServerApp
                                 System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                                 startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
                                 startInfo.FileName = "cmd.exe";
-                                startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(data.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
+                                startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(dataDecoded.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
                                 process.StartInfo = startInfo;
                                 process.Start();
                                 break;
