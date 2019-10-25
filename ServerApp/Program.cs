@@ -9,6 +9,7 @@ using System.Text;
 using System.Linq;
 using System.IO;
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 
 namespace ServerApp
 {
@@ -43,6 +44,17 @@ namespace ServerApp
         static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
         [DllImport("user32.dll")] //dołączenie biblioteki pozwalającej na ingerencję w akcje generowane przez klawiaturę
         static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+        
+        //////////////////////////////BIBLIOTEKI DO UKRYWANIA OKNA KONSOLOWEGO/////////////////////////////////////
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetConsoleWindow();
+
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        const int SW_HIDE = 0;
+        const int SW_SHOW = 5;
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         static public int quadraticFunction(double x) //funkcja kwadratowa do lepszej jakości sterowania kursorem TODO: DODAĆ INERCJĘ I RZĘDU
         {
@@ -68,6 +80,19 @@ namespace ServerApp
             TcpClient client;
             short port = 1234; //Zakres short jest wymuszany przez Zeroconf
             string password = "testowehaslo1234";
+
+            foreach (var item in args)
+            {
+                switch (item)
+                {
+                    case "HideCmdWindow":
+                        var handle = GetConsoleWindow();
+                        ShowWindow(handle, SW_HIDE); //Ukrycie okna konsolowego
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             try
             {
