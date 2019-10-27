@@ -2,9 +2,8 @@
 Serwer hosta dla aplikacji Pilot opracowany z wykorzystaniem Visual Studio 2017 i .NET Framwework 4.6.1
 Klient znajduje się [tutaj](https://github.com/lnarolski/Pilot).
 
-# Działanie
-Zadaniem aplikacji jest kontrola działania myszki i klawiatury na komputerze z zainstalowanym systemem Windows. Do poprawnej pracy należy doinstalować następujące elementy:
-* [Usługa Bonjour](https://support.apple.com/kb/DL999)
+![Screenshot](https://raw.githubusercontent.com/lnarolski/PilotServer/master/Screenshots/screenshot1.png)
 
-# TODO
-- Instalowanie aplikacji w systemie jako usługa
+# Działanie
+Zadaniem aplikacji jest kontrola działania myszki i klawiatury oraz kontroli multimediów na komputerze z zainstalowanym systemem Windows. Do poprawnej pracy należy doinstalować następujące elementy (dołączone również do instalatora):
+* [Usługa Bonjour](https://support.apple.com/kb/DL999)
