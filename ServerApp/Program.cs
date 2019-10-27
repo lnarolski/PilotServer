@@ -78,8 +78,8 @@ namespace ServerApp
         {
             TcpListener server;
             TcpClient client;
-            short port = 1234; //Zakres short jest wymuszany przez Zeroconf
-            string password = "testowehaslo1234";
+            short port = 22222; //Zakres short jest wymuszany przez Zeroconf
+            string password = "";
 
             foreach (var item in args)
             {
@@ -214,7 +214,7 @@ namespace ServerApp
                         switch (command)
                         {
                             case Commands.SEND_TEXT: //odebranie tekstu
-                                responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, bytes - 4);
+                                responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, dataDecoded.Length - 4);
                                 if (responseData == "\n")
                                     SendKeys.SendWait("{ENTER}");
                                 else
