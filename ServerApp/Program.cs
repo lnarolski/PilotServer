@@ -54,6 +54,7 @@ namespace ServerApp
 
         const int SW_HIDE = 0;
         const int SW_SHOW = 5;
+
         //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         static public int quadraticFunction(double x) //funkcja kwadratowa do lepszej jakości sterowania kursorem TODO: DODAĆ INERCJĘ I RZĘDU
@@ -80,6 +81,7 @@ namespace ServerApp
             TcpClient client;
             short port = 22222; //Zakres short jest wymuszany przez Zeroconf
             string password = "";
+            bool LoggingEnabled = false;
 
             foreach (var item in args)
             {
@@ -88,6 +90,9 @@ namespace ServerApp
                     case "HideCmdWindow":
                         var handle = GetConsoleWindow();
                         ShowWindow(handle, SW_HIDE); //Ukrycie okna konsolowego
+                        break;
+                    case "Log":
+                        LoggingEnabled = true; //Włączenie logowania błędów do pliku
                         break;
                     default:
                         break;
@@ -130,6 +135,13 @@ namespace ServerApp
             {
                 Console.Write("{0} ", DateTime.Now.ToString("HH:mm:ss"));
                 System.Console.WriteLine(error.ToString());
+
+                if (LoggingEnabled)
+                {
+                    StreamWriter LogFile = File.CreateText("log.txt");
+                    LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                    LogFile.Close();
+                }
             }
 
             try
@@ -153,10 +165,17 @@ namespace ServerApp
                     service.Port = port; //Port
                     service.Register(); //Uruchomienie Zeroconf z powyższą konfiguracją
                 }
-                catch (Exception e)
+                catch (Exception error)
                 {
                     Console.Write("{0} ", DateTime.Now.ToString("HH:mm:ss"));
-                    Console.WriteLine(e.ToString());
+                    Console.WriteLine(error.ToString());
+
+                    if (LoggingEnabled)
+                    {
+                        StreamWriter LogFile = File.CreateText("log.txt");
+                        LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                        LogFile.Close();
+                    }
                 }
                 //////////////////////////////////////////////////
 
@@ -204,6 +223,13 @@ namespace ServerApp
                         {
                             Console.Write("{0} NIEPRAWIDLOWE HASLO W KONFIGURACJI KLIENTA: ", DateTime.Now.ToString("HH:mm:ss"));
                             System.Console.WriteLine(error.ToString());
+
+                            if (LoggingEnabled)
+                            {
+                                StreamWriter LogFile = File.CreateText("log.txt");
+                                LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                                LogFile.Close();
+                            }
                             continue;
                         }
 
@@ -283,6 +309,13 @@ namespace ServerApp
                     {
                         Console.Write("{0} ", DateTime.Now.ToString("HH:mm:ss"));
                         System.Console.WriteLine(error.ToString());
+
+                        if (LoggingEnabled)
+                        {
+                            StreamWriter LogFile = File.CreateText("log.txt");
+                            LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                            LogFile.Close();
+                        }
                     }
                 }
             }
@@ -290,6 +323,13 @@ namespace ServerApp
             {
                 Console.Write("{0} ", DateTime.Now.ToString("HH:mm:ss"));
                 System.Console.WriteLine(error.ToString());
+
+                if (LoggingEnabled)
+                {
+                    StreamWriter LogFile = File.CreateText("log.txt");
+                    LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                    LogFile.Close();
+                }
             }
         }
     }
