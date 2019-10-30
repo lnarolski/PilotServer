@@ -7,3 +7,6 @@ Klient znajduje się [tutaj](https://github.com/lnarolski/Pilot).
 # Działanie
 Zadaniem aplikacji jest kontrola działania myszki i klawiatury oraz kontroli multimediów na komputerze z zainstalowanym systemem Windows. Do poprawnej pracy należy doinstalować następujące elementy (dołączone również do instalatora):
 * [Usługa Bonjour](https://support.apple.com/kb/DL999)
+
+# TODO
+- Dodanie obsługi połączenia przez protokół UDP
