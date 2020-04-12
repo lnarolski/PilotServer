@@ -13,3 +13,4 @@ Zadaniem aplikacji jest kontrola działania myszki i klawiatury oraz kontroli mu
 - Dodanie zabezpieczenia przed powielaniem pakietów z poleceniami
 - Dodanie udostępniania przez protokół Bonjour nazwy hosta
 - Dodanie GUI
+- Dodanie obsługi wielu jednoczesnych klientów
