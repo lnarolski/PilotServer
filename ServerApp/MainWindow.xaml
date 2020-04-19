@@ -28,13 +28,14 @@
                 Grid.Row="2"
                 Content="START"
                 Click="serverStateButton_Click"/>
-        <ScrollViewer
-                   Grid.Column="0"
-                   Grid.Row="1"
-                   Grid.ColumnSpan="3" >
-            <TextBlock x:Name="logTextBlock"
-                       ScrollViewer.VerticalScrollBarVisibility="Auto" 
-                       ScrollViewer.CanContentScroll="True" />
+        <ScrollViewer Grid.Column="0"
+                      Grid.Row="1"
+                      Grid.ColumnSpan="3" >
+            <TextBox x:Name="logTextBox"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                     ScrollViewer.CanContentScroll="True"
+                     IsReadOnly="true"
+                     TextChanged="logTextBox_TextChanged"  />
         </ScrollViewer>
         <StackPanel Grid.Row="0"
                     Grid.Column="2" />

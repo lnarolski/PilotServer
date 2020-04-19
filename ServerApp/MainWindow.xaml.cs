@@ -93,6 +93,7 @@ namespace ServerApp
         string password = "";
         bool LoggingEnabled = false;
         UInt64 connectedClients = 0;
+        System.Drawing.Point point = new System.Drawing.Point(); //Point wykorzystywany do zadawania pozycji kursora
 
         public MainWindow()
         {
@@ -165,7 +166,7 @@ namespace ServerApp
         {
             if (tcpServerStopped)
             {
-                logTextBlock.Text = "";
+                logTextBox.Text = "";
                 tcpServerStopped = false;
                 stopTcpServer = false;
                 tcpServer = new Thread(new ThreadStart(TcpServer));
@@ -310,7 +311,9 @@ namespace ServerApp
                                 case Commands.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
                                     double moveX = BitConverter.ToDouble(dataDecoded, 4);
                                     double moveY = BitConverter.ToDouble(dataDecoded, 12);
-                                    System.Windows.Forms.Cursor.Position = new System.Drawing.Point(System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX), System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY));
+                                    point.X = System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX);
+                                    point.Y = System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY);
+                                    System.Windows.Forms.Cursor.Position = point;
                                     UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Komenda: " + command.ToString() + " Przesunięcie: " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
                                     break;
                                 case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
@@ -392,7 +395,12 @@ namespace ServerApp
 
         private void UpdateLog(string newMessage)
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBlock.Text += newMessage + "\n"; }));
+            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Text += newMessage + "\n"; }));
+        }
+
+        private void logTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            logTextBox.ScrollToEnd();
         }
     }
 }
