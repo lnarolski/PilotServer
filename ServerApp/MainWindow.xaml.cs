@@ -86,14 +86,17 @@ namespace ServerApp
         bool ucpServerStopped = true;
         bool stopTcpServer = false;
         bool stopUdpServer = false;
+        private bool connectedClientsManagerStopped = true;
+        private bool stopConnectedClientsManager = true;
 
-        TcpListener server;
-        TcpClient client;
         short port = 22222; //Zakres short jest wymuszany przez Zeroconf
         string password = "";
         bool LoggingEnabled = false;
-        UInt64 connectedClients = 0;
         System.Drawing.Point point = new System.Drawing.Point(); //Point wykorzystywany do zadawania pozycji kursora
+        List<TcpClient> connectedTcpClients = new List<TcpClient>();
+        List<NetworkStream> connectedClients = new List<NetworkStream>();
+
+        Int32 changingConnectedClients = 0;
 
         public MainWindow()
         {
@@ -178,62 +181,41 @@ namespace ServerApp
             }
         }
 
-        private void TcpServer()
+        private void ConnectedClientsManager()
         {
-            stopTcpServer = false;
+            stopConnectedClientsManager = false;
+            connectedClientsManagerStopped = false;
 
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = "STOP"; }));
+            Byte[] buffer = new Byte[9999]; //bufor do odbioru bajtów danych
 
-            RegisterService service = new RegisterService(); //Utworzenie obiektu odpowiedzialnego za działanie grupy technik Zeroconf;
-
-            try
+            while (!stopConnectedClientsManager)
             {
-                IPAddress adres_ip = IPAddress.Any;
-                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Serwer uruchomiony.\n" + DateTime.Now.ToString("HH:mm:ss") + " Dane do polaczenia: " + adres_ip.ToString() + ":" + port.ToString());
-                server = new TcpListener(adres_ip, port);
-                server.Start();
-
-                AesCryptoServiceProvider _aes;
-                _aes = new AesCryptoServiceProvider();
-                _aes.KeySize = 256;
-                _aes.BlockSize = 128;
-
-                //////////////////////Zeroconf////////////////////
-                try
+                if (connectedClients.Count > 0)
                 {
-                    service.Name = Environment.MachineName + " Pilot Server"; //Nazwa usługi
-                    service.RegType = "_pilotServer._tcp"; //Typ usługi
-                    service.ReplyDomain = "local."; //Domena
-                    service.Port = port; //Port
-                    service.Register(); //Uruchomienie Zeroconf z powyższą konfiguracją
-                }
-                catch (Exception error)
-                {
-                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                    while (1 == Interlocked.Exchange(ref changingConnectedClients, 1)) ;
 
-                    if (LoggingEnabled)
+                    for (int i = connectedClients.Count - 1; i >= 0; --i) //DO ZOPTYMALIZOWANIA
                     {
-                        StreamWriter LogFile = File.CreateText("log.txt");
-                        LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
-                        LogFile.Close();
-                    }
-                }
-                //////////////////////////////////////////////////
-
-                while (!stopTcpServer)
-                {
-                    try
-                    {
-                        if (server.Pending())
+                        try
                         {
-                            client = server.AcceptTcpClient();
-                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Polaczono z klientem.");
-                            NetworkStream stream = client.GetStream();
-                            Byte[] buffer = new Byte[9999]; //bufor do odbioru bajtów danych
+                            connectedClients[i].WriteByte((byte) 'T');
+                        }
+                        catch (Exception)
+                        {
+                            connectedClients[i].Dispose();
+                            connectedClients.RemoveAt(i);
+                            continue;
+                        }
+                        if (connectedClients[i].DataAvailable)
+                        {
+                            AesCryptoServiceProvider _aes;
+                            _aes = new AesCryptoServiceProvider();
+                            _aes.KeySize = 256;
+                            _aes.BlockSize = 128;
 
                             String responseData = String.Empty; //string wykorzystywany do przechowywania odebranych tekstów
 
-                            Int32 bytes = stream.Read(buffer, 0, buffer.Length); //odczyt danych z bufora
+                            Int32 bytes = connectedClients[i].Read(buffer, 0, buffer.Length); //odczyt danych z bufora
 
                             Byte[] data = new Byte[bytes];
                             Array.Copy(buffer, data, bytes);
@@ -260,8 +242,6 @@ namespace ServerApp
                                         dataDecoded = MemoryStream.ToArray();
                                     }
                                 }
-
-                                ++connectedClients;
                             }
                             catch (Exception error)
                             {
@@ -346,12 +326,91 @@ namespace ServerApp
                                 default:
                                     break;
                             }
-
-                            stream.Close();
-                            client.Close(); 
                         }
-                        else if (connectedClients == 0)
+                    }
+
+                    Interlocked.Exchange(ref changingConnectedClients, 0);
+                }
+                else
+                {
+                    Thread.Sleep(500);
+                }
+            }
+
+            connectedClientsManagerStopped = true;
+        }
+
+        private void TcpServer()
+        {
+            stopTcpServer = false;
+            tcpServerStopped = false;
+
+            while (!connectedClientsManagerStopped) ;
+            Thread connectedClientsManagerThread = new Thread(new ThreadStart(ConnectedClientsManager));
+            connectedClientsManagerThread.Start();
+
+            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = "STOP"; }));
+
+            RegisterService service = new RegisterService(); //Utworzenie obiektu odpowiedzialnego za działanie grupy technik Zeroconf;
+
+            IPAddress adres_ip = IPAddress.Any;
+            TcpListener server = new TcpListener(adres_ip, port);
+
+            try
+            {
+                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Serwer uruchomiony.\n" + DateTime.Now.ToString("HH:mm:ss") + " Dane do polaczenia: " + adres_ip.ToString() + ":" + port.ToString());
+                server.Start();
+
+                //////////////////////Zeroconf////////////////////
+                try
+                {
+                    service.Name = Environment.MachineName + " Pilot Server"; //Nazwa usługi
+                    service.RegType = "_pilotServer._tcp"; //Typ usługi
+                    service.ReplyDomain = "local."; //Domena
+                    service.Port = port; //Port
+                    service.Register(); //Uruchomienie Zeroconf z powyższą konfiguracją
+                }
+                catch (Exception error)
+                {
+                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+
+                    if (LoggingEnabled)
+                    {
+                        StreamWriter LogFile = File.CreateText("log.txt");
+                        LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                        LogFile.Close();
+                    }
+                }
+                //////////////////////////////////////////////////
+
+                while (!stopTcpServer)
+                {
+                    try
+                    {
+                        if (server.Pending())
                         {
+                            TcpClient tcpClient = server.AcceptTcpClient();
+                            connectedTcpClients.Add(tcpClient);
+                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Polaczono z klientem.");
+
+
+                            while (1 == Interlocked.Exchange(ref changingConnectedClients, 1));
+
+                            NetworkStream networkStream = tcpClient.GetStream();
+                            networkStream.WriteTimeout = 1000;
+                            connectedClients.Add(networkStream);
+
+                            Interlocked.Exchange(ref changingConnectedClients, 0);
+                        }
+                        else
+                        {
+                            for (int i = connectedTcpClients.Count - 1; i >= 0; --i)  //DO ZOPTYMALIZOWANIA
+                            {
+                                if (!connectedTcpClients[i].Connected)
+                                {
+                                    connectedTcpClients.RemoveAt(i);
+                                }
+                            }
                             Thread.Sleep(3000);
                         }    
                     }
@@ -382,10 +441,10 @@ namespace ServerApp
 
             service.Dispose();
             server.Stop();
+            stopConnectedClientsManager = true;
 
             tcpServerStopped = true;
             System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = "START"; }));
-            connectedClients = 0;
         }
 
         private void UdpServer()
@@ -400,6 +459,7 @@ namespace ServerApp
 
         private void logTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
+            logTextBox.CaretIndex = logTextBox.Text.Length;
             logTextBox.ScrollToEnd();
         }
     }
