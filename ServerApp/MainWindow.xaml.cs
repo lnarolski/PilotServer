@@ -204,6 +204,7 @@ namespace ServerApp
                         {
                             connectedClients[i].Dispose();
                             connectedClients.RemoveAt(i);
+                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Rozlaczono klienta");
                             continue;
                         }
                         if (connectedClients[i].DataAvailable)
@@ -337,6 +338,12 @@ namespace ServerApp
                 }
             }
 
+            foreach (var item in connectedClients)
+            {
+                item.Dispose();
+            }
+            connectedClients.Clear();
+
             connectedClientsManagerStopped = true;
         }
 
@@ -359,6 +366,7 @@ namespace ServerApp
             try
             {
                 UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Serwer uruchomiony.\n" + DateTime.Now.ToString("HH:mm:ss") + " Dane do polaczenia: " + adres_ip.ToString() + ":" + port.ToString());
+                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Hasło: " + password);
                 server.Start();
 
                 //////////////////////Zeroconf////////////////////
@@ -444,6 +452,7 @@ namespace ServerApp
             stopConnectedClientsManager = true;
 
             tcpServerStopped = true;
+            while (!connectedClientsManagerStopped) { }
             System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = "START"; }));
         }
 
