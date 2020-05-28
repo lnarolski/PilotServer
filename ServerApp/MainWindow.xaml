@@ -28,6 +28,16 @@
                 Grid.Row="2"
                 Content="START"
                 Click="serverStateButton_Click"/>
+        <CheckBox x:Name="enableWindowLogCheckbox"
+                  Grid.Column="2"
+                  Grid.Row="0"
+                  Content="Włącz diagnostykę"
+                  Checked="EnableWindowLogCheckbox_Checked"
+                  Unchecked="EnableWindowLogCheckbox_Unchecked"
+                  IsChecked="True"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+            />
         <ScrollViewer Grid.Column="0"
                       Grid.Row="1"
                       Grid.ColumnSpan="3" >

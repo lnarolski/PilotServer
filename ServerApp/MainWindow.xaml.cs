@@ -98,6 +98,8 @@ namespace ServerApp
 
         Int32 changingConnectedClients = 0;
 
+        bool windowLogEnabled;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -463,13 +465,24 @@ namespace ServerApp
 
         private void UpdateLog(string newMessage)
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Text += newMessage + "\n"; }));
+            if (windowLogEnabled)
+                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Text += newMessage + "\n"; }));
         }
 
         private void logTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             logTextBox.CaretIndex = logTextBox.Text.Length;
             logTextBox.ScrollToEnd();
+        }
+
+        private void EnableWindowLogCheckbox_Checked(object sender, RoutedEventArgs e)
+        {
+            windowLogEnabled = true;
+        }
+
+        private void EnableWindowLogCheckbox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            windowLogEnabled = false;
         }
     }
 }
