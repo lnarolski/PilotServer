@@ -367,8 +367,8 @@ namespace ServerApp
 
             try
             {
-                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Serwer uruchomiony.\n" + DateTime.Now.ToString("HH:mm:ss") + " Dane do polaczenia: " + adres_ip.ToString() + ":" + port.ToString());
-                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Hasło: " + password);
+                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Serwer uruchomiony.\n" + DateTime.Now.ToString("HH:mm:ss") + " Dane do polaczenia: " + adres_ip.ToString() + ":" + port.ToString(), true);
+                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Hasło: " + password, true);
                 server.Start();
 
                 //////////////////////Zeroconf////////////////////
@@ -401,7 +401,7 @@ namespace ServerApp
                         {
                             TcpClient tcpClient = server.AcceptTcpClient();
                             connectedTcpClients.Add(tcpClient);
-                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Polaczono z klientem.");
+                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Polaczono z klientem: " + tcpClient.Client.RemoteEndPoint.ToString(), true);
 
 
                             while (1 == Interlocked.Exchange(ref changingConnectedClients, 1));
@@ -463,9 +463,9 @@ namespace ServerApp
 
         }
 
-        private void UpdateLog(string newMessage)
+        private void UpdateLog(string newMessage, bool ignoreLogConfiguration = false)
         {
-            if (windowLogEnabled)
+            if (windowLogEnabled || ignoreLogConfiguration)
                 System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Text += newMessage + "\n"; }));
         }
 
