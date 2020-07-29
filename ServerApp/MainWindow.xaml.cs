@@ -21,6 +21,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Drawing;
+using System.Globalization;
 
 namespace ServerApp
 {
@@ -91,6 +92,7 @@ namespace ServerApp
 
         short port = 22222; //Zakres short jest wymuszany przez Zeroconf
         string password = "";
+        string language;
         bool LoggingEnabled = false;
         System.Drawing.Point point = new System.Drawing.Point(); //Point wykorzystywany do zadawania pozycji kursora
         List<TcpClient> connectedTcpClients = new List<TcpClient>();
@@ -104,6 +106,9 @@ namespace ServerApp
         {
             InitializeComponent();
 
+            CultureInfo cultureInfo = CultureInfo.CurrentCulture;
+            language = cultureInfo.TwoLetterISOLanguageName == "pl"?"pl":"en";
+                
             string[] commandLineArgs = Environment.GetCommandLineArgs();
 
             foreach (var item in commandLineArgs)
@@ -129,6 +134,7 @@ namespace ServerApp
                     StreamWriter ConfigFile = File.CreateText("config.ini");
                     ConfigFile.WriteLine("PORT=" + port.ToString());
                     ConfigFile.WriteLine("PASSWORD=" + password.ToString());
+                    ConfigFile.WriteLine("LANGUAGE=" + language.ToString());
                     ConfigFile.Close();
                 }
                 else
@@ -146,8 +152,11 @@ namespace ServerApp
                             case "PASSWORD":
                                 password = value[1];
                                 break;
+                            case "LANGUAGE":
+                                language = value[1];
+                                break;
                             default:
-                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " NIEPRAWIDLOWY ODCZYT Z PLIKU config.ini");
+                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ConfigFileError);
                                 break;
                         }
                     }
@@ -206,7 +215,7 @@ namespace ServerApp
                         {
                             connectedClients[i].Dispose();
                             connectedClients.RemoveAt(i);
-                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Rozlaczono klienta");
+                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientDisconnected);
                             continue;
                         }
                         if (connectedClients[i].DataAvailable)
@@ -248,7 +257,7 @@ namespace ServerApp
                             }
                             catch (Exception error)
                             {
-                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " NIEPRAWIDLOWE HASLO W KONFIGURACJI KLIENTA: " + error.ToString());
+                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.WrongClientPassword + " " + error.ToString());
 
                                 if (LoggingEnabled)
                                 {
@@ -271,25 +280,25 @@ namespace ServerApp
                                         SendKeys.SendWait("{ENTER}");
                                     else
                                         SendKeys.SendWait(responseData);
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Komenda: " + command.ToString() + " Wiadomość: " + responseData);
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " Wiadomość: " + responseData);
                                     break;
                                 case Commands.SEND_BACKSPACE: //odebranie klawisza BACKSPACE
                                     SendKeys.SendWait("{BACKSPACE}");
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Komenda: " + command.ToString());
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                     break;
                                 case Commands.SEND_LEFT_MOUSE: //odebranie lewego przycisku myszy
                                     mouse_event(
                                         (uint)(MouseEventFlags.MOVE |
                                             MouseEventFlags.LEFTDOWN | MouseEventFlags.LEFTUP),
                                         0, 0, 0, 0);
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Komenda: " + command.ToString());
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                     break;
                                 case Commands.SEND_RIGHT_MOUSE: //odebranie prawego przycisku myszy
                                     mouse_event(
                                         (uint)(MouseEventFlags.MOVE |
                                             MouseEventFlags.RIGHTDOWN | MouseEventFlags.RIGHTUP),
                                         0, 0, 0, 0);
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Komenda: " + command.ToString());
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                     break;
                                 case Commands.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
                                     double moveX = BitConverter.ToDouble(dataDecoded, 4);
@@ -297,7 +306,7 @@ namespace ServerApp
                                     point.X = System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX);
                                     point.Y = System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY);
                                     System.Windows.Forms.Cursor.Position = point;
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Komenda: " + command.ToString() + " Przesunięcie: " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " Przesunięcie: " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
                                     break;
                                 case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
                                     keybd_event((byte)KeyboardEventFlags.NEXT, 0, 0, 0);
@@ -358,7 +367,7 @@ namespace ServerApp
             Thread connectedClientsManagerThread = new Thread(new ThreadStart(ConnectedClientsManager));
             connectedClientsManagerThread.Start();
 
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = "STOP"; }));
+            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = Properties.Resources.StopServer; }));
 
             RegisterService service = new RegisterService(); //Utworzenie obiektu odpowiedzialnego za działanie grupy technik Zeroconf;
 
@@ -367,8 +376,8 @@ namespace ServerApp
 
             try
             {
-                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Serwer uruchomiony.\n" + DateTime.Now.ToString("HH:mm:ss") + " Dane do polaczenia: " + adres_ip.ToString() + ":" + port.ToString(), true);
-                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Hasło: " + password, true);
+                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ServerStarted + "\n" + DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ConnectionParams + " " + adres_ip.ToString() + ":" + port.ToString(), true);
+                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ConnectionPassword + " " + password, true);
                 server.Start();
 
                 //////////////////////Zeroconf////////////////////
@@ -401,7 +410,7 @@ namespace ServerApp
                         {
                             TcpClient tcpClient = server.AcceptTcpClient();
                             connectedTcpClients.Add(tcpClient);
-                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " Polaczono z klientem: " + tcpClient.Client.RemoteEndPoint.ToString(), true);
+                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientConnected + " " + tcpClient.Client.RemoteEndPoint.ToString(), true);
 
 
                             while (1 == Interlocked.Exchange(ref changingConnectedClients, 1));
@@ -455,7 +464,7 @@ namespace ServerApp
 
             tcpServerStopped = true;
             while (!connectedClientsManagerStopped) { }
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = "START"; }));
+            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = Properties.Resources.StartServer; }));
         }
 
         private void UdpServer()
@@ -483,6 +492,12 @@ namespace ServerApp
         private void EnableWindowLogCheckbox_Unchecked(object sender, RoutedEventArgs e)
         {
             windowLogEnabled = false;
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            SettingsWindow settingsWindow = new SettingsWindow(port, password, language);
+            settingsWindow.ShowDialog();
         }
     }
 }

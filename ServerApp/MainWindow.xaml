@@ -3,9 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:p="clr-namespace:ServerApp.Properties"
         xmlns:local="clr-namespace:ServerApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="578.198" Width="636.483">
+        Title="Pilot Server" Height="578.198" Width="636.483">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*" />
@@ -19,25 +20,27 @@
         </Grid.ColumnDefinitions>
 
         <Button x:Name="settingsButton"
-                Content="SETTINGS"
+                Content="{x:Static p:Resources.Settings}"
+                Click="SettingsButton_Click"
                 Grid.Column="0"
                 Grid.Row="0"/>
         <Button x:Name="serverStateButton"
                 Grid.Column="0"
                 Grid.ColumnSpan="3"
                 Grid.Row="2"
-                Content="START"
+                Content="{x:Static p:Resources.StartServer}"
                 Click="serverStateButton_Click"/>
         <CheckBox x:Name="enableWindowLogCheckbox"
                   Grid.Column="2"
                   Grid.Row="0"
-                  Content="Włącz diagnostykę"
+                  Content="{x:Static p:Resources.TurnOnLogging}"
                   Checked="EnableWindowLogCheckbox_Checked"
                   Unchecked="EnableWindowLogCheckbox_Unchecked"
                   IsChecked="True"
                   HorizontalAlignment="Center"
                   VerticalAlignment="Center"
             />
+        
         <ScrollViewer Grid.Column="0"
                       Grid.Row="1"
                       Grid.ColumnSpan="3" >
