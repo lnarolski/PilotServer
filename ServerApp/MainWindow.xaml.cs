@@ -90,9 +90,9 @@ namespace ServerApp
         private bool connectedClientsManagerStopped = true;
         private bool stopConnectedClientsManager = true;
 
-        short port = 22222; //Zakres short jest wymuszany przez Zeroconf
-        string password = "";
-        string language;
+        public short port = 22222; //Zakres short jest wymuszany przez Zeroconf
+        public string password = "";
+        public string language;
         bool LoggingEnabled = false;
         System.Drawing.Point point = new System.Drawing.Point(); //Point wykorzystywany do zadawania pozycji kursora
         List<TcpClient> connectedTcpClients = new List<TcpClient>();
@@ -189,6 +189,11 @@ namespace ServerApp
             else
             {
                 stopTcpServer = true;
+
+                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
+                    serverStateButton.Content = Properties.Resources.StoppingServer;
+                    serverStateButton.IsEnabled = false;
+                }));
             }
         }
 
@@ -464,7 +469,10 @@ namespace ServerApp
 
             tcpServerStopped = true;
             while (!connectedClientsManagerStopped) { }
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = Properties.Resources.StartServer; }));
+            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
+                serverStateButton.Content = Properties.Resources.StartServer;
+                serverStateButton.IsEnabled = true;
+            }));
         }
 
         private void UdpServer()
@@ -497,6 +505,9 @@ namespace ServerApp
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             SettingsWindow settingsWindow = new SettingsWindow(port, password, language);
+            settingsWindow.port += value => port = value;
+            settingsWindow.password += value => password = value;
+            settingsWindow.language += value => language = value;
             settingsWindow.ShowDialog();
         }
     }

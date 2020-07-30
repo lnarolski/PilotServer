@@ -151,6 +151,24 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Podaj hasło.
+        /// </summary>
+        public static string PasswordTextBoxToolTip {
+            get {
+                return ResourceManager.GetString("PasswordTextBoxToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Podaj port w zakresie od 0 do 32 767.
+        /// </summary>
+        public static string PortTextBoxToolTip {
+            get {
+                return ResourceManager.GetString("PortTextBoxToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Serwer uruchomiony.
         /// </summary>
         public static string ServerStarted {
@@ -174,6 +192,15 @@ namespace ServerApp.Properties {
         public static string StartServer {
             get {
                 return ResourceManager.GetString("StartServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Zatrzymywanie serwera....
+        /// </summary>
+        public static string StoppingServer {
+            get {
+                return ResourceManager.GetString("StoppingServer", resourceCulture);
             }
         }
         

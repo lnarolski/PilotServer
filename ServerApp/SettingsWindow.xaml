@@ -27,6 +27,7 @@
                 Content="{x:Static p:Resources.ConnectionPort}" />
             <TextBox
                 x:Name="connectionPortTextBox"
+                TextChanged="ConnectionPortTextBox_TextChanged"
                 />
             <Label
                 Content="{x:Static p:Resources.ConnectionPassword}" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +21,8 @@ namespace ServerApp
     public partial class SettingsWindow : Window
     {
         public Action<short> port;
+        public Action<string> password;
+        public Action<string> language;
 
         public SettingsWindow(short port, string password, string language)
         {
@@ -31,16 +34,71 @@ namespace ServerApp
                 appLangComboBox.SelectedIndex = 0;
             else
                 appLangComboBox.SelectedIndex = 1;
+
+            connectionPortTextBox.ToolTip = new ToolTip()
+            {
+                Content = Properties.Resources.PortTextBoxToolTip
+            };
+            connectionPasswordTextBox.ToolTip = new ToolTip()
+            {
+                Content = Properties.Resources.PasswordTextBoxToolTip
+            };
         }
 
         private void OKButton_Click(object sender, RoutedEventArgs e)
         {
+            port(short.Parse(connectionPortTextBox.Text));
+            password(connectionPasswordTextBox.Text);
 
+            string lang = "";
+            switch (appLangComboBox.Text)
+            {
+                case "Polski":
+                    language("pl");
+                    lang = "pl";
+                    break;
+                case "English":
+                    language("en");
+                    lang = "en";
+                    break;
+                default:
+                    break;
+            }
+
+            using (StreamWriter ConfigFile = File.CreateText("config.ini"))
+            {
+                ConfigFile.WriteLine("PORT=" + short.Parse(connectionPortTextBox.Text));
+                ConfigFile.WriteLine("PASSWORD=" + connectionPasswordTextBox.Text);
+                ConfigFile.WriteLine("LANGUAGE=" + lang);
+            }
+
+            this.Close();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void ConnectionPortTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                int temp = int.Parse(connectionPortTextBox.Text);
+
+                if (temp > short.MaxValue)
+                {
+                    connectionPortTextBox.Text = short.MaxValue.ToString();
+                }
+                else if (temp < 0)
+                {
+                    connectionPortTextBox.Text = "0";
+                }
+            }
+            catch (Exception)
+            {
+                connectionPortTextBox.Text = "";
+            }
         }
     }
 }

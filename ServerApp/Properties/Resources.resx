@@ -147,6 +147,12 @@
   <data name="OK" xml:space="preserve">
     <value>OK</value>
   </data>
+  <data name="PasswordTextBoxToolTip" xml:space="preserve">
+    <value>Podaj hasło</value>
+  </data>
+  <data name="PortTextBoxToolTip" xml:space="preserve">
+    <value>Podaj port w zakresie od 0 do 32 767</value>
+  </data>
   <data name="ServerStarted" xml:space="preserve">
     <value>Serwer uruchomiony</value>
   </data>
@@ -155,6 +161,9 @@
   </data>
   <data name="StartServer" xml:space="preserve">
     <value>Włącz serwer</value>
+  </data>
+  <data name="StoppingServer" xml:space="preserve">
+    <value>Zatrzymywanie serwera...</value>
   </data>
   <data name="StopServer" xml:space="preserve">
     <value>Wyłącz serwer</value>
