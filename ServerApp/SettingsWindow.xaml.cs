@@ -23,10 +23,18 @@ namespace ServerApp
         public Action<short> port;
         public Action<string> password;
         public Action<string> language;
+        public Action<bool> settingsChanged;
 
-        public SettingsWindow(short port, string password, string language)
+        string prevLang;
+        string logging;
+
+        public SettingsWindow(short port, string password, string language, string logging)
         {
             InitializeComponent();
+
+            this.logging = logging;
+
+            prevLang = language;
 
             connectionPortTextBox.Text = port.ToString();
             connectionPasswordTextBox.Text = password;
@@ -70,7 +78,15 @@ namespace ServerApp
                 ConfigFile.WriteLine("PORT=" + short.Parse(connectionPortTextBox.Text));
                 ConfigFile.WriteLine("PASSWORD=" + connectionPasswordTextBox.Text);
                 ConfigFile.WriteLine("LANGUAGE=" + lang);
+                ConfigFile.WriteLine("LOGGING=" + logging);
             }
+
+            if (lang != prevLang)
+                MessageBox.Show(Properties.Resources.RestartAppLang, "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+            else
+                MessageBox.Show(Properties.Resources.RestartServer, "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            settingsChanged(true);
 
             this.Close();
         }

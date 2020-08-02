@@ -100,14 +100,14 @@ namespace ServerApp
 
         Int32 changingConnectedClients = 0;
 
-        bool windowLogEnabled;
+        public bool windowLogEnabled { set; get; }
+        bool settingsChanged;
+        private bool logging;
 
         public MainWindow()
         {
-            InitializeComponent();
-
             CultureInfo cultureInfo = CultureInfo.CurrentCulture;
-            language = cultureInfo.TwoLetterISOLanguageName == "pl"?"pl":"en";
+            language = cultureInfo.TwoLetterISOLanguageName == "pl" ? "pl" : "en";
                 
             string[] commandLineArgs = Environment.GetCommandLineArgs();
 
@@ -115,10 +115,6 @@ namespace ServerApp
             {
                 switch (item)
                 {
-                    //case "HideCmdWindow":
-                    //    var handle = GetConsoleWindow();
-                    //    ShowWindow(handle, SW_HIDE); //Ukrycie okna konsolowego
-                    //    break;
                     case "Log":
                         LoggingEnabled = true; //Włączenie logowania błędów do pliku
                         break;
@@ -131,36 +127,36 @@ namespace ServerApp
             {
                 if (!File.Exists("config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
                 {
-                    StreamWriter ConfigFile = File.CreateText("config.ini");
-                    ConfigFile.WriteLine("PORT=" + port.ToString());
-                    ConfigFile.WriteLine("PASSWORD=" + password.ToString());
-                    ConfigFile.WriteLine("LANGUAGE=" + language.ToString());
-                    ConfigFile.Close();
+                    UpdateConfigFile(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString());
                 }
                 else
                 {
-                    StreamReader ConfigFile = File.OpenText("config.ini");
-                    string ConfigFileLine;
-                    while ((ConfigFileLine = ConfigFile.ReadLine()) != null)
+                    using (StreamReader ConfigFile = File.OpenText("config.ini"))
                     {
-                        string[] value = ConfigFileLine.Split('=');
-                        switch (value[0])
+                        string ConfigFileLine;
+                        while ((ConfigFileLine = ConfigFile.ReadLine()) != null)
                         {
-                            case "PORT":
-                                port = short.Parse(value[1]);
-                                break;
-                            case "PASSWORD":
-                                password = value[1];
-                                break;
-                            case "LANGUAGE":
-                                language = value[1];
-                                break;
-                            default:
-                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ConfigFileError);
-                                break;
+                            string[] value = ConfigFileLine.Split('=');
+                            switch (value[0])
+                            {
+                                case "PORT":
+                                    port = short.Parse(value[1]);
+                                    break;
+                                case "PASSWORD":
+                                    password = value[1];
+                                    break;
+                                case "LANGUAGE":
+                                    language = value[1];
+                                    break;
+                                case "LOGGING":
+                                    logging = value[1] == "True" ? true : false;
+                                    break;
+                                default:
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ConfigFileError);
+                                    break;
+                            }
                         }
                     }
-                    ConfigFile.Close();
                 }
             }
             catch (Exception error)
@@ -173,6 +169,42 @@ namespace ServerApp
                     LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                     LogFile.Close();
                 }
+            }
+
+            ChangeUILanguage(language);
+            
+            InitializeComponent();
+            enableWindowLogCheckbox.IsChecked = logging;
+
+            this.Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            UpdateConfigFile(port, password, language, windowLogEnabled.ToString());
+        }
+
+        private void UpdateConfigFile(short port, string password, string language, string logging)
+        {
+            using (StreamWriter ConfigFile = File.CreateText("config.ini"))
+            {
+                ConfigFile.WriteLine("PORT=" + port.ToString());
+                ConfigFile.WriteLine("PASSWORD=" + password);
+                ConfigFile.WriteLine("LANGUAGE=" + language);
+                ConfigFile.WriteLine("LOGGING=" + logging);
+            }
+        }
+
+        private void ChangeUILanguage(string language)
+        {
+            switch (language)
+            {
+                case "en":
+                    System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("en");
+                    break;
+                default:
+                    System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("pl-PL");
+                    break;
             }
         }
 
@@ -504,11 +536,22 @@ namespace ServerApp
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            SettingsWindow settingsWindow = new SettingsWindow(port, password, language);
+            SettingsWindow settingsWindow = new SettingsWindow(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString());
             settingsWindow.port += value => port = value;
             settingsWindow.password += value => password = value;
             settingsWindow.language += value => language = value;
+
+            settingsChanged = false;
+            settingsWindow.settingsChanged += value => settingsChanged = value;
+
+            settingsWindow.Closed += SettingsWindow_Closed;
             settingsWindow.ShowDialog();
+        }
+
+        private void SettingsWindow_Closed(object sender, EventArgs e)
+        {
+            if (settingsChanged)
+                ChangeUILanguage(language);
         }
     }
 }

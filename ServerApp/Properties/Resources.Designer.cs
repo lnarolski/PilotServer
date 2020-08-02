@@ -61,7 +61,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Język:.
+        ///   Looks up a localized string similar to Language:.
         /// </summary>
         public static string AppLang {
             get {
@@ -70,7 +70,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Anuluj.
+        ///   Looks up a localized string similar to Cancel.
         /// </summary>
         public static string Cancel {
             get {
@@ -79,7 +79,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Komenda:.
+        ///   Looks up a localized string similar to Command:.
         /// </summary>
         public static string ClientCommand {
             get {
@@ -88,7 +88,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Polaczono z klientem:.
+        ///   Looks up a localized string similar to Client connected:.
         /// </summary>
         public static string ClientConnected {
             get {
@@ -97,7 +97,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Rozlaczono klienta.
+        ///   Looks up a localized string similar to Client disconnected:.
         /// </summary>
         public static string ClientDisconnected {
             get {
@@ -106,7 +106,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to NIEPRAWIDLOWY ODCZYT Z PLIKU config.ini.
+        ///   Looks up a localized string similar to config.ini FILE READ ERROR.
         /// </summary>
         public static string ConfigFileError {
             get {
@@ -115,7 +115,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Dane do polaczenia:.
+        ///   Looks up a localized string similar to Connection parameters:.
         /// </summary>
         public static string ConnectionParams {
             get {
@@ -124,7 +124,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Hasło:.
+        ///   Looks up a localized string similar to Password:.
         /// </summary>
         public static string ConnectionPassword {
             get {
@@ -151,7 +151,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Podaj hasło.
+        ///   Looks up a localized string similar to Input password.
         /// </summary>
         public static string PasswordTextBoxToolTip {
             get {
@@ -160,7 +160,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Podaj port w zakresie od 0 do 32 767.
+        ///   Looks up a localized string similar to Input port value in range between 0 to 32 767.
         /// </summary>
         public static string PortTextBoxToolTip {
             get {
@@ -169,7 +169,25 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Serwer uruchomiony.
+        ///   Looks up a localized string similar to Uruchom aplikację ponownie w celu zmiany ustawień.
+        /// </summary>
+        public static string RestartAppLang {
+            get {
+                return ResourceManager.GetString("RestartAppLang", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Restart server to apply changes.
+        /// </summary>
+        public static string RestartServer {
+            get {
+                return ResourceManager.GetString("RestartServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server started.
         /// </summary>
         public static string ServerStarted {
             get {
@@ -178,7 +196,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Ustawienia.
+        ///   Looks up a localized string similar to Settings.
         /// </summary>
         public static string Settings {
             get {
@@ -187,7 +205,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Włącz serwer.
+        ///   Looks up a localized string similar to Turn on server.
         /// </summary>
         public static string StartServer {
             get {
@@ -196,7 +214,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Zatrzymywanie serwera....
+        ///   Looks up a localized string similar to Stopping server....
         /// </summary>
         public static string StoppingServer {
             get {
@@ -205,7 +223,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Wyłącz serwer.
+        ///   Looks up a localized string similar to Turn off server.
         /// </summary>
         public static string StopServer {
             get {
@@ -214,7 +232,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Włącz diagnostykę.
+        ///   Looks up a localized string similar to Turn on logging.
         /// </summary>
         public static string TurnOnLogging {
             get {
@@ -223,7 +241,7 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to NIEPRAWIDLOWE HASLO W KONFIGURACJI KLIENTA:.
+        ///   Looks up a localized string similar to WRONG CLIENT PASSWORD:.
         /// </summary>
         public static string WrongClientPassword {
             get {

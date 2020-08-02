@@ -6,7 +6,7 @@
         xmlns:p="clr-namespace:ServerApp.Properties"
         xmlns:local="clr-namespace:ServerApp"
         mc:Ignorable="d"
-        Title="SettingsWindow" Height="450" Width="800">
+        Title="{x:Static p:Resources.Settings}" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*" />

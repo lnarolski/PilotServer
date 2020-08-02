@@ -118,28 +118,28 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppLang" xml:space="preserve">
-    <value>Language:</value>
+    <value>Język:</value>
   </data>
   <data name="Cancel" xml:space="preserve">
-    <value>Cancel</value>
+    <value>Anuluj</value>
   </data>
   <data name="ClientCommand" xml:space="preserve">
-    <value>Command:</value>
+    <value>Komenda:</value>
   </data>
   <data name="ClientConnected" xml:space="preserve">
-    <value>Client connected:</value>
+    <value>Polaczono z klientem:</value>
   </data>
   <data name="ClientDisconnected" xml:space="preserve">
-    <value>Client disconnected:</value>
+    <value>Rozlaczono klienta</value>
   </data>
   <data name="ConfigFileError" xml:space="preserve">
-    <value>config.ini FILE READ ERROR</value>
+    <value>NIEPRAWIDLOWY ODCZYT Z PLIKU config.ini</value>
   </data>
   <data name="ConnectionParams" xml:space="preserve">
-    <value>Connection parameters:</value>
+    <value>Dane do polaczenia:</value>
   </data>
   <data name="ConnectionPassword" xml:space="preserve">
-    <value>Password:</value>
+    <value>Hasło:</value>
   </data>
   <data name="ConnectionPort" xml:space="preserve">
     <value>Port:</value>
@@ -148,36 +148,36 @@
     <value>OK</value>
   </data>
   <data name="PasswordTextBoxToolTip" xml:space="preserve">
-    <value>Input password</value>
+    <value>Podaj hasło</value>
   </data>
   <data name="PortTextBoxToolTip" xml:space="preserve">
-    <value>Input port value in range between 0 to 32 767</value>
+    <value>Podaj port w zakresie od 0 do 32 767</value>
   </data>
   <data name="RestartAppLang" xml:space="preserve">
-    <value>Uruchom aplikację ponownie w celu zmiany ustawień</value>
+    <value>Restart application to update settings</value>
   </data>
   <data name="RestartServer" xml:space="preserve">
-    <value>Restart server to apply changes</value>
+    <value>Uruchom ponownie serwer, aby wprowadzić zmiany</value>
   </data>
   <data name="ServerStarted" xml:space="preserve">
-    <value>Server started</value>
+    <value>Serwer uruchomiony</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>Settings</value>
+    <value>Ustawienia</value>
   </data>
   <data name="StartServer" xml:space="preserve">
-    <value>Turn on server</value>
+    <value>Włącz serwer</value>
   </data>
   <data name="StoppingServer" xml:space="preserve">
-    <value>Stopping server...</value>
+    <value>Zatrzymywanie serwera...</value>
   </data>
   <data name="StopServer" xml:space="preserve">
-    <value>Turn off server</value>
+    <value>Wyłącz serwer</value>
   </data>
   <data name="TurnOnLogging" xml:space="preserve">
-    <value>Turn on logging</value>
+    <value>Włącz diagnostykę</value>
   </data>
   <data name="WrongClientPassword" xml:space="preserve">
-    <value>WRONG CLIENT PASSWORD:</value>
+    <value>NIEPRAWIDLOWE HASLO W KONFIGURACJI KLIENTA:</value>
   </data>
 </root>
