@@ -11,6 +11,3 @@ Zadaniem aplikacji jest kontrola działania myszki i klawiatury oraz kontroli mu
 # TODO
 - Dodanie obsługi połączenia przez protokół UDP
 - Dodanie zabezpieczenia przed powielaniem pakietów z poleceniami
-- Dodanie udostępniania przez protokół Bonjour nazwy hosta
-- Dodanie GUI
-- Dodanie obsługi wielu jednoczesnych klientów
