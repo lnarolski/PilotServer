@@ -22,6 +22,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Drawing;
 using System.Globalization;
+using Hardcodet.Wpf.TaskbarNotification;
 
 namespace ServerApp
 {
@@ -103,6 +104,8 @@ namespace ServerApp
         public bool windowLogEnabled { set; get; }
         bool settingsChanged;
         private bool logging;
+
+        private TaskbarIcon notifyIcon;
 
         public MainWindow()
         {
