@@ -66,6 +66,7 @@
     <Compile Include="NotifyIconResources.xaml.cs">
       <DependentUpon>NotifyIconResources.xaml</DependentUpon>
     </Compile>
+    <Compile Include="NotifyIconViewModel.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
       <AutoGen>True</AutoGen>

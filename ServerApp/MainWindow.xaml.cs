@@ -180,6 +180,8 @@ namespace ServerApp
             enableWindowLogCheckbox.IsChecked = logging;
 
             this.Closing += MainWindow_Closing;
+
+            //notifyIcon = new TaskbarIcon();
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
