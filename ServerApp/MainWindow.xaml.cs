@@ -23,6 +23,7 @@ using System.Windows.Shapes;
 using System.Drawing;
 using System.Globalization;
 using Hardcodet.Wpf.TaskbarNotification;
+using System.Runtime.CompilerServices;
 
 namespace ServerApp
 {
@@ -105,7 +106,7 @@ namespace ServerApp
         bool settingsChanged;
         private bool logging;
 
-        private TaskbarIcon notifyIcon;
+        //private TaskbarIcon notifyIcon;
 
         public MainWindow()
         {
@@ -180,8 +181,24 @@ namespace ServerApp
             enableWindowLogCheckbox.IsChecked = logging;
 
             this.Closing += MainWindow_Closing;
+            this.StateChanged += MainWindow_StateChanged;
 
-            //notifyIcon = new TaskbarIcon();
+            MyNotifyIcon.Visibility = Visibility.Collapsed;
+        }
+
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            switch (this.WindowState)
+            {
+                case WindowState.Maximized:
+                    break;
+                case WindowState.Minimized:
+                    MyNotifyIcon.Visibility = Visibility.Visible;
+                    Hide();
+                    break;
+                case WindowState.Normal:
+                    break;
+            }
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -222,10 +239,13 @@ namespace ServerApp
                 stopTcpServer = false;
                 tcpServer = new Thread(new ThreadStart(TcpServer));
                 tcpServer.Start();
+                startServerTrayButton.IsEnabled = false;
+                stopServerTrayButton.IsEnabled = true;
             }
             else
             {
                 stopTcpServer = true;
+                stopServerTrayButton.IsEnabled = false;
 
                 System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
                     serverStateButton.Content = Properties.Resources.StoppingServer;
@@ -505,11 +525,15 @@ namespace ServerApp
             stopConnectedClientsManager = true;
 
             tcpServerStopped = true;
+
             while (!connectedClientsManagerStopped) { }
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
-                serverStateButton.Content = Properties.Resources.StartServer;
-                serverStateButton.IsEnabled = true;
-            }));
+
+            if (System.Windows.Application.Current != null)
+                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
+                    if (serverStateButton != null) serverStateButton.Content = Properties.Resources.StartServer;
+                    if (serverStateButton != null) serverStateButton.IsEnabled = true;
+                    if (startServerTrayButton != null) startServerTrayButton.IsEnabled = true;
+                }));
         }
 
         private void UdpServer()
@@ -557,6 +581,44 @@ namespace ServerApp
         {
             if (settingsChanged)
                 ChangeUILanguage(language);
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            //clean up notifyicon (would otherwise stay open until application finishes)
+            MyNotifyIcon.Dispose();
+            
+            if (!tcpServerStopped)
+                serverStateButton_Click(null, null);
+
+            base.OnClosing(e);
+        }
+
+        private void StartServerTray_Click(object sender, RoutedEventArgs e)
+        {
+            serverStateButton_Click(null, null);
+        }
+
+        private void StopServerTray_Click(object sender, RoutedEventArgs e)
+        {
+            serverStateButton_Click(null, null);
+        }
+
+        private void ShowWindowTray_Click(object sender, RoutedEventArgs e)
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            MyNotifyIcon.Visibility = Visibility.Collapsed;
+        }
+
+        private void ExitAppTray_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void MyNotifyIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
+        {
+            ShowWindowTray_Click(null, null);
         }
     }
 }

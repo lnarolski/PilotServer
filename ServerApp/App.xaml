@@ -4,10 +4,6 @@
              xmlns:local="clr-namespace:ServerApp"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="NotifyIconResources.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
+        
     </Application.Resources>
 </Application>

@@ -144,6 +144,9 @@
   <data name="ConnectionPort" xml:space="preserve">
     <value>Port:</value>
   </data>
+  <data name="ExitAppTray" xml:space="preserve">
+    <value>Wyjdź</value>
+  </data>
   <data name="OK" xml:space="preserve">
     <value>OK</value>
   </data>
@@ -165,13 +168,22 @@
   <data name="Settings" xml:space="preserve">
     <value>Ustawienia</value>
   </data>
+  <data name="ShowWindowTray" xml:space="preserve">
+    <value>Pokaż</value>
+  </data>
   <data name="StartServer" xml:space="preserve">
+    <value>Włącz serwer</value>
+  </data>
+  <data name="StartServerTray" xml:space="preserve">
     <value>Włącz serwer</value>
   </data>
   <data name="StoppingServer" xml:space="preserve">
     <value>Zatrzymywanie serwera...</value>
   </data>
   <data name="StopServer" xml:space="preserve">
+    <value>Wyłącz serwer</value>
+  </data>
+  <data name="StopServerTray" xml:space="preserve">
     <value>Wyłącz serwer</value>
   </data>
   <data name="TurnOnLogging" xml:space="preserve">

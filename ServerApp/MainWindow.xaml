@@ -53,6 +53,37 @@
         <StackPanel Grid.Row="0"
                     Grid.Column="2" />
 
-        <tb:TaskbarIcon x:Name="MyNotifyIcon" IconSource="/Icon.ico" ToolTipText="hello world" />
+        <tb:TaskbarIcon x:Name="MyNotifyIcon"
+                        IconSource="Icon.ico"
+                        TrayMouseDoubleClick="MyNotifyIcon_TrayMouseDoubleClick"
+                        ToolTipText="{x:Static p:Resources.AppName}">
+
+            <!-- Set a simple context menu  -->
+            <!-- the data context of the context menu is the NotifyIcon itself (see more about this in DataBinding samples) -->
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{x:Static p:Resources.StartServerTray}"
+                              x:Name="startServerTrayButton"
+                              IsEnabled="True"
+                              Click="StartServerTray_Click">
+                    </MenuItem>
+                    <MenuItem Header="{x:Static p:Resources.StopServerTray}"
+                              x:Name="stopServerTrayButton"
+                              IsEnabled="False"
+                              Click="StopServerTray_Click">
+                    </MenuItem>
+
+                    <Separator />
+
+                    <MenuItem Header="{x:Static p:Resources.ShowWindowTray}"
+                              Click="ShowWindowTray_Click">
+                    </MenuItem>
+                    <MenuItem Header="{x:Static p:Resources.ExitAppTray}"
+                              Click="ExitAppTray_Click">
+                    </MenuItem>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+
+        </tb:TaskbarIcon>
     </Grid>
 </Window>

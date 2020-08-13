@@ -19,7 +19,7 @@ namespace ServerApp.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -66,6 +66,15 @@ namespace ServerApp.Properties {
         public static string AppLang {
             get {
                 return ResourceManager.GetString("AppLang", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pilot Server.
+        /// </summary>
+        public static string AppName {
+            get {
+                return ResourceManager.GetString("AppName", resourceCulture);
             }
         }
         
@@ -142,6 +151,15 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Exit.
+        /// </summary>
+        public static string ExitAppTray {
+            get {
+                return ResourceManager.GetString("ExitAppTray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to OK.
         /// </summary>
         public static string OK {
@@ -205,11 +223,29 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show.
+        /// </summary>
+        public static string ShowWindowTray {
+            get {
+                return ResourceManager.GetString("ShowWindowTray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Turn on server.
         /// </summary>
         public static string StartServer {
             get {
                 return ResourceManager.GetString("StartServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Start server.
+        /// </summary>
+        public static string StartServerTray {
+            get {
+                return ResourceManager.GetString("StartServerTray", resourceCulture);
             }
         }
         
@@ -228,6 +264,15 @@ namespace ServerApp.Properties {
         public static string StopServer {
             get {
                 return ResourceManager.GetString("StopServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stop server.
+        /// </summary>
+        public static string StopServerTray {
+            get {
+                return ResourceManager.GetString("StopServerTray", resourceCulture);
             }
         }
         

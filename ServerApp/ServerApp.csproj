@@ -63,10 +63,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="NotifyIconResources.xaml.cs">
-      <DependentUpon>NotifyIconResources.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="NotifyIconViewModel.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
       <AutoGen>True</AutoGen>
@@ -93,9 +89,6 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="NotifyIconResources.xaml">
-      <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
-    </Page>
     <Page Include="SettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
