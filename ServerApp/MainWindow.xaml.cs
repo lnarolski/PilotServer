@@ -115,12 +115,20 @@ namespace ServerApp
                 
             string[] commandLineArgs = Environment.GetCommandLineArgs();
 
+            bool hideWindow = false;
+            bool started = false;
             foreach (var item in commandLineArgs)
             {
                 switch (item)
                 {
                     case "Log":
                         LoggingEnabled = true; //Włączenie logowania błędów do pliku
+                        break;
+                    case "HideWindow":
+                        hideWindow = true; //Ukrywa okno po uruchomieniu aplikacji
+                        break;
+                    case "Started":
+                        started = true; //Uruchamia serwer od razu po uruchomieniu aplikacji
                         break;
                     default:
                         break;
@@ -178,12 +186,22 @@ namespace ServerApp
             ChangeUILanguage(language);
             
             InitializeComponent();
+            MyNotifyIcon.Visibility = Visibility.Collapsed;
+
             enableWindowLogCheckbox.IsChecked = logging;
 
             this.Closing += MainWindow_Closing;
             this.StateChanged += MainWindow_StateChanged;
 
-            MyNotifyIcon.Visibility = Visibility.Collapsed;
+            if (hideWindow)
+            {
+                WindowState = WindowState.Minimized;
+                MyNotifyIcon.Visibility = Visibility.Visible;
+                Hide();
+            }
+
+            if (started)
+                serverStateButton_Click(null, null);
         }
 
         private void MainWindow_StateChanged(object sender, EventArgs e)
