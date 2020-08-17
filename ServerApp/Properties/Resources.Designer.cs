@@ -79,6 +79,15 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Turn on server at Windows startup.
+        /// </summary>
+        public static string Autostart {
+            get {
+                return ResourceManager.GetString("Autostart", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
         public static string Cancel {
@@ -156,6 +165,15 @@ namespace ServerApp.Properties {
         public static string ExitAppTray {
             get {
                 return ResourceManager.GetString("ExitAppTray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Information.
+        /// </summary>
+        public static string Information {
+            get {
+                return ResourceManager.GetString("Information", resourceCulture);
             }
         }
         

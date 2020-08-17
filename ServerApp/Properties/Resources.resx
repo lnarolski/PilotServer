@@ -123,6 +123,9 @@
   <data name="AppName" xml:space="preserve">
     <value>Pilot Server</value>
   </data>
+  <data name="Autostart" xml:space="preserve">
+    <value>Turn on server at Windows startup</value>
+  </data>
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
@@ -149,6 +152,9 @@
   </data>
   <data name="ExitAppTray" xml:space="preserve">
     <value>Exit</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Information</value>
   </data>
   <data name="OK" xml:space="preserve">
     <value>OK</value>

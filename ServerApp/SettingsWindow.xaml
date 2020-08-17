@@ -41,6 +41,11 @@
                 <ComboBoxItem IsSelected="True">Polski</ComboBoxItem>
                 <ComboBoxItem>English</ComboBoxItem>
             </ComboBox>
+            <CheckBox
+                Content="{x:Static p:Resources.Autostart}"
+                Margin="20"
+                x:Name="autostartCheckBox"
+             />
         </StackPanel>
         <Button 
             Grid.Column="0" 

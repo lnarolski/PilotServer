@@ -105,8 +105,7 @@ namespace ServerApp
         public bool windowLogEnabled { set; get; }
         bool settingsChanged;
         private bool logging;
-
-        //private TaskbarIcon notifyIcon;
+        private bool autostart;
 
         public MainWindow()
         {
@@ -139,7 +138,7 @@ namespace ServerApp
             {
                 if (!File.Exists("config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
                 {
-                    UpdateConfigFile(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString());
+                    UpdateConfigFile(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString(), autostart.ToString());
                 }
                 else
                 {
@@ -162,6 +161,9 @@ namespace ServerApp
                                     break;
                                 case "LOGGING":
                                     logging = value[1] == "True" ? true : false;
+                                    break;
+                                case "AUTOSTART":
+                                    autostart = value[1] == "True" ? true : false;
                                     break;
                                 default:
                                     UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ConfigFileError);
@@ -221,10 +223,10 @@ namespace ServerApp
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            UpdateConfigFile(port, password, language, windowLogEnabled.ToString());
+            UpdateConfigFile(port, password, language, windowLogEnabled.ToString(), autostart.ToString());
         }
 
-        private void UpdateConfigFile(short port, string password, string language, string logging)
+        private void UpdateConfigFile(short port, string password, string language, string logging, string autostart)
         {
             using (StreamWriter ConfigFile = File.CreateText("config.ini"))
             {
@@ -232,6 +234,7 @@ namespace ServerApp
                 ConfigFile.WriteLine("PASSWORD=" + password);
                 ConfigFile.WriteLine("LANGUAGE=" + language);
                 ConfigFile.WriteLine("LOGGING=" + logging);
+                ConfigFile.WriteLine("AUTOSTART=" + autostart);
             }
         }
 
@@ -583,10 +586,11 @@ namespace ServerApp
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            SettingsWindow settingsWindow = new SettingsWindow(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString());
+            SettingsWindow settingsWindow = new SettingsWindow(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString(), autostart);
             settingsWindow.port += value => port = value;
             settingsWindow.password += value => password = value;
             settingsWindow.language += value => language = value;
+            settingsWindow.autostart += value => autostart = value;
 
             settingsChanged = false;
             settingsWindow.settingsChanged += value => settingsChanged = value;
