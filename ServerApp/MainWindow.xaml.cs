@@ -94,7 +94,7 @@ namespace ServerApp
 
         public short port = 22222; //Zakres short jest wymuszany przez Zeroconf
         public string password = "";
-        public string language;
+        public string language = "en";
         bool LoggingEnabled = false;
         System.Drawing.Point point = new System.Drawing.Point(); //Point wykorzystywany do zadawania pozycji kursora
         List<TcpClient> connectedTcpClients = new List<TcpClient>();
