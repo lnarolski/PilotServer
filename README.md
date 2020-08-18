@@ -1,5 +1,5 @@
 # PilotServer
-Serwer hosta dla aplikacji Pilot opracowany z wykorzystaniem Visual Studio 2017 i .NET Framwework 4.6.1
+Serwer hosta dla aplikacji Pilot opracowany z wykorzystaniem Visual Studio 2019 i .NET Framwework 4.7.2
 Klient znajduje się [tutaj](https://github.com/lnarolski/Pilot).
 
 ![Screenshot](https://raw.githubusercontent.com/lnarolski/PilotServer/master/Screenshots/screenshot1.png)
