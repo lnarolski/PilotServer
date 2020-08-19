@@ -136,13 +136,13 @@ namespace ServerApp
 
             try
             {
-                if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "\\config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
+                if (!File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
                 {
                     UpdateConfigFile(port, password, language, "False", autostart.ToString());
                 }
                 else
                 {
-                    using (StreamReader ConfigFile = File.OpenText(AppDomain.CurrentDomain.BaseDirectory + "\\config.ini"))
+                    using (StreamReader ConfigFile = File.OpenText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\config.ini"))
                     {
                         string ConfigFileLine;
                         while ((ConfigFileLine = ConfigFile.ReadLine()) != null)
@@ -179,7 +179,7 @@ namespace ServerApp
 
                 if (LoggingEnabled)
                 {
-                    StreamWriter LogFile = File.CreateText("log.txt");
+                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                     LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                     LogFile.Close();
                 }
@@ -189,6 +189,9 @@ namespace ServerApp
             
             InitializeComponent();
             MyNotifyIcon.Visibility = Visibility.Collapsed;
+
+            Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server");
+            UpdateLog(Properties.Resources.AppDataDirectory + " " + Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server", true);
 
             enableWindowLogCheckbox.IsChecked = logging;
 
@@ -228,7 +231,7 @@ namespace ServerApp
 
         private void UpdateConfigFile(short port, string password, string language, string logging, string autostart)
         {
-            using (StreamWriter ConfigFile = File.CreateText(AppDomain.CurrentDomain.BaseDirectory + "\\config.ini"))
+            using (StreamWriter ConfigFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\config.ini"))
             {
                 ConfigFile.WriteLine("PORT=" + port.ToString());
                 ConfigFile.WriteLine("PASSWORD=" + password);
@@ -344,7 +347,7 @@ namespace ServerApp
 
                                 if (LoggingEnabled)
                                 {
-                                    StreamWriter LogFile = File.CreateText("log.txt");
+                                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                                     LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                                     LogFile.Close();
                                 }
@@ -430,7 +433,7 @@ namespace ServerApp
 
                                 if (LoggingEnabled)
                                 {
-                                    StreamWriter LogFile = File.CreateText("log.txt");
+                                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                                     LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                                     LogFile.Close();
                                 }
@@ -492,7 +495,7 @@ namespace ServerApp
 
                     if (LoggingEnabled)
                     {
-                        StreamWriter LogFile = File.CreateText("log.txt");
+                        StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                         LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                         LogFile.Close();
                     }
@@ -536,7 +539,7 @@ namespace ServerApp
 
                         if (LoggingEnabled)
                         {
-                            StreamWriter LogFile = File.CreateText("log.txt");
+                            StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                             LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                             LogFile.Close();
                         }
@@ -549,7 +552,7 @@ namespace ServerApp
 
                 if (LoggingEnabled)
                 {
-                    StreamWriter LogFile = File.CreateText("log.txt");
+                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                     LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                     LogFile.Close();
                 }

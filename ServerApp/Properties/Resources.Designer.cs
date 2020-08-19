@@ -61,6 +61,15 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to App data directory:.
+        /// </summary>
+        public static string AppDataDirectory {
+            get {
+                return ResourceManager.GetString("AppDataDirectory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Language:.
         /// </summary>
         public static string AppLang {

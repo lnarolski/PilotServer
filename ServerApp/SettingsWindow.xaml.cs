@@ -79,7 +79,7 @@ namespace ServerApp
                     break;
             }
 
-            using (StreamWriter ConfigFile = System.IO.File.CreateText(AppDomain.CurrentDomain.BaseDirectory + "\\config.ini"))
+            using (StreamWriter ConfigFile = System.IO.File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\config.ini"))
             {
                 ConfigFile.WriteLine("PORT=" + short.Parse(connectionPortTextBox.Text));
                 ConfigFile.WriteLine("PASSWORD=" + connectionPasswordTextBox.Text);
