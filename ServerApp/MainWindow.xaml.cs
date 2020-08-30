@@ -246,10 +246,10 @@ namespace ServerApp
             switch (language)
             {
                 case "en":
-                    System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("en");
+                    System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("en");
                     break;
                 default:
-                    System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("pl-PL");
+                    System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("pl-PL");
                     break;
             }
         }
@@ -442,6 +442,8 @@ namespace ServerApp
                     }
 
                     Interlocked.Exchange(ref changingConnectedClients, 0);
+
+                    Thread.Sleep(5);
                 }
                 else
                 {
