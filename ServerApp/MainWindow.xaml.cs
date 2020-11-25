@@ -345,6 +345,9 @@ namespace ServerApp
                                     System.Windows.Forms.Cursor.Position = point;
                                     UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " Przesunięcie: " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
                                     break;
+                                case Commands.SEND_WHEEL_MOUSE: //odebranie polecenia obrócenia rolki myszy
+
+                                    break;
                                 case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
                                     keybd_event((byte)KeyboardEventFlags.NEXT, 0, 0, 0);
                                     break;
