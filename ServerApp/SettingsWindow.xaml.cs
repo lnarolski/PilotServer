@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IWshRuntimeLibrary;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,17 +25,20 @@ namespace ServerApp
         public Action<string> password;
         public Action<string> language;
         public Action<bool> settingsChanged;
+        public Action<bool> autostart;
 
         string prevLang;
+        bool prevAutostart;
         string logging;
 
-        public SettingsWindow(short port, string password, string language, string logging)
+        public SettingsWindow(short port, string password, string language, string logging, bool autostart)
         {
             InitializeComponent();
 
             this.logging = logging;
 
             prevLang = language;
+            prevAutostart = autostart;
 
             connectionPortTextBox.Text = port.ToString();
             connectionPasswordTextBox.Text = password;
@@ -42,6 +46,8 @@ namespace ServerApp
                 appLangComboBox.SelectedIndex = 0;
             else
                 appLangComboBox.SelectedIndex = 1;
+
+            autostartCheckBox.IsChecked = autostart;
 
             connectionPortTextBox.ToolTip = new ToolTip()
             {
@@ -73,20 +79,42 @@ namespace ServerApp
                     break;
             }
 
-            using (StreamWriter ConfigFile = File.CreateText("config.ini"))
+            using (StreamWriter ConfigFile = System.IO.File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\config.ini"))
             {
                 ConfigFile.WriteLine("PORT=" + short.Parse(connectionPortTextBox.Text));
                 ConfigFile.WriteLine("PASSWORD=" + connectionPasswordTextBox.Text);
                 ConfigFile.WriteLine("LANGUAGE=" + lang);
                 ConfigFile.WriteLine("LOGGING=" + logging);
+                ConfigFile.WriteLine("AUTOSTART=" + autostartCheckBox.IsChecked.ToString());
             }
 
             if (lang != prevLang)
-                MessageBox.Show(Properties.Resources.RestartAppLang, "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(Properties.Resources.RestartAppLang, Properties.Resources.Information, MessageBoxButton.OK, MessageBoxImage.Information);
             else
-                MessageBox.Show(Properties.Resources.RestartServer, "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(Properties.Resources.RestartServer, Properties.Resources.Information, MessageBoxButton.OK, MessageBoxImage.Information);
+
+            if (autostartCheckBox.IsChecked != prevAutostart)
+            {
+                string startupDir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                string shortcutDir = startupDir + "\\" + "ServerApp" + ".lnk";
+
+                if (System.IO.File.Exists(shortcutDir))
+                    System.IO.File.Delete(shortcutDir);
+
+                if ((bool) autostartCheckBox.IsChecked)
+                {
+                    object shStartup = (object)"Startup";
+                    WshShell shell = new WshShell();
+                    string shortcutAddress = shortcutDir;
+                    IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(shortcutAddress);
+                    shortcut.Arguments = "HideWindow Started";
+                    shortcut.TargetPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                    shortcut.Save();
+                }
+            }
 
             settingsChanged(true);
+            autostart((bool) autostartCheckBox.IsChecked);
 
             this.Close();
         }

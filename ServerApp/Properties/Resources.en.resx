@@ -117,8 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AppDataDirectory" xml:space="preserve">
+    <value>App data directory:</value>
+  </data>
   <data name="AppLang" xml:space="preserve">
     <value>Language:</value>
+  </data>
+  <data name="Autostart" xml:space="preserve">
+    <value>Turn on server at Windows startup</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
@@ -144,6 +150,12 @@
   <data name="ConnectionPort" xml:space="preserve">
     <value>Port:</value>
   </data>
+  <data name="ExitAppTray" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Information</value>
+  </data>
   <data name="OK" xml:space="preserve">
     <value>OK</value>
   </data>
@@ -165,14 +177,23 @@
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="ShowWindowTray" xml:space="preserve">
+    <value>Show</value>
+  </data>
   <data name="StartServer" xml:space="preserve">
     <value>Turn on server</value>
+  </data>
+  <data name="StartServerTray" xml:space="preserve">
+    <value>Start server</value>
   </data>
   <data name="StoppingServer" xml:space="preserve">
     <value>Stopping server...</value>
   </data>
   <data name="StopServer" xml:space="preserve">
     <value>Turn off server</value>
+  </data>
+  <data name="StopServerTray" xml:space="preserve">
+    <value>Stop server</value>
   </data>
   <data name="TurnOnLogging" xml:space="preserve">
     <value>Turn on logging</value>

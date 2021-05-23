@@ -22,6 +22,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Drawing;
 using System.Globalization;
+using Hardcodet.Wpf.TaskbarNotification;
+using System.Runtime.CompilerServices;
 
 namespace ServerApp
 {
@@ -92,7 +94,7 @@ namespace ServerApp
 
         public short port = 22222; //Zakres short jest wymuszany przez Zeroconf
         public string password = "";
-        public string language;
+        public string language = "en";
         bool LoggingEnabled = false;
         System.Drawing.Point point = new System.Drawing.Point(); //Point wykorzystywany do zadawania pozycji kursora
         List<TcpClient> connectedTcpClients = new List<TcpClient>();
@@ -103,6 +105,7 @@ namespace ServerApp
         public bool windowLogEnabled { set; get; }
         bool settingsChanged;
         private bool logging;
+        private bool autostart;
 
         public MainWindow()
         {
@@ -111,12 +114,20 @@ namespace ServerApp
                 
             string[] commandLineArgs = Environment.GetCommandLineArgs();
 
+            bool hideWindow = false;
+            bool started = false;
             foreach (var item in commandLineArgs)
             {
                 switch (item)
                 {
                     case "Log":
                         LoggingEnabled = true; //Włączenie logowania błędów do pliku
+                        break;
+                    case "HideWindow":
+                        hideWindow = true; //Ukrywa okno po uruchomieniu aplikacji
+                        break;
+                    case "Started":
+                        started = true; //Uruchamia serwer od razu po uruchomieniu aplikacji
                         break;
                     default:
                         break;
@@ -125,13 +136,13 @@ namespace ServerApp
 
             try
             {
-                if (!File.Exists("config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
+                if (!File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\config.ini")) //Odczyt lub utworzenie pliku konfiguracyjnego
                 {
-                    UpdateConfigFile(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString());
+                    UpdateConfigFile(port, password, language, "False", autostart.ToString());
                 }
                 else
                 {
-                    using (StreamReader ConfigFile = File.OpenText("config.ini"))
+                    using (StreamReader ConfigFile = File.OpenText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\config.ini"))
                     {
                         string ConfigFileLine;
                         while ((ConfigFileLine = ConfigFile.ReadLine()) != null)
@@ -151,6 +162,9 @@ namespace ServerApp
                                 case "LOGGING":
                                     logging = value[1] == "True" ? true : false;
                                     break;
+                                case "AUTOSTART":
+                                    autostart = value[1] == "True" ? true : false;
+                                    break;
                                 default:
                                     UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ConfigFileError);
                                     break;
@@ -165,7 +179,7 @@ namespace ServerApp
 
                 if (LoggingEnabled)
                 {
-                    StreamWriter LogFile = File.CreateText("log.txt");
+                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                     LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                     LogFile.Close();
                 }
@@ -174,24 +188,56 @@ namespace ServerApp
             ChangeUILanguage(language);
             
             InitializeComponent();
+            MyNotifyIcon.Visibility = Visibility.Collapsed;
+
+            Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server");
+            UpdateLog(Properties.Resources.AppDataDirectory + " " + Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server", true);
+
             enableWindowLogCheckbox.IsChecked = logging;
 
             this.Closing += MainWindow_Closing;
+            this.StateChanged += MainWindow_StateChanged;
+
+            if (hideWindow)
+            {
+                WindowState = WindowState.Minimized;
+                MyNotifyIcon.Visibility = Visibility.Visible;
+                Hide();
+            }
+
+            if (started)
+                serverStateButton_Click(null, null);
+        }
+
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            switch (this.WindowState)
+            {
+                case WindowState.Maximized:
+                    break;
+                case WindowState.Minimized:
+                    MyNotifyIcon.Visibility = Visibility.Visible;
+                    Hide();
+                    break;
+                case WindowState.Normal:
+                    break;
+            }
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            UpdateConfigFile(port, password, language, windowLogEnabled.ToString());
+            UpdateConfigFile(port, password, language, windowLogEnabled.ToString(), autostart.ToString());
         }
 
-        private void UpdateConfigFile(short port, string password, string language, string logging)
+        private void UpdateConfigFile(short port, string password, string language, string logging, string autostart)
         {
-            using (StreamWriter ConfigFile = File.CreateText("config.ini"))
+            using (StreamWriter ConfigFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\config.ini"))
             {
                 ConfigFile.WriteLine("PORT=" + port.ToString());
                 ConfigFile.WriteLine("PASSWORD=" + password);
                 ConfigFile.WriteLine("LANGUAGE=" + language);
                 ConfigFile.WriteLine("LOGGING=" + logging);
+                ConfigFile.WriteLine("AUTOSTART=" + autostart);
             }
         }
 
@@ -200,10 +246,10 @@ namespace ServerApp
             switch (language)
             {
                 case "en":
-                    System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("en");
+                    System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("en");
                     break;
                 default:
-                    System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("pl-PL");
+                    System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("pl-PL");
                     break;
             }
         }
@@ -217,10 +263,13 @@ namespace ServerApp
                 stopTcpServer = false;
                 tcpServer = new Thread(new ThreadStart(TcpServer));
                 tcpServer.Start();
+                startServerTrayButton.IsEnabled = false;
+                stopServerTrayButton.IsEnabled = true;
             }
             else
             {
                 stopTcpServer = true;
+                stopServerTrayButton.IsEnabled = false;
 
                 System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
                     serverStateButton.Content = Properties.Resources.StoppingServer;
@@ -298,7 +347,7 @@ namespace ServerApp
 
                                 if (LoggingEnabled)
                                 {
-                                    StreamWriter LogFile = File.CreateText("log.txt");
+                                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                                     LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                                     LogFile.Close();
                                 }
@@ -309,9 +358,11 @@ namespace ServerApp
                                 continue;
 
                             Commands command = (Commands)BitConverter.ToInt32(dataDecoded, 0); //wyodrębnienie odebranej komendy
-                            switch (command)
+                            try
                             {
-                                case Commands.SEND_TEXT: //odebranie tekstu
+                                switch (command)
+                                {
+                                    case Commands.SEND_TEXT: //odebranie tekstu
                                     responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, dataDecoded.Length - 4);
                                     if (responseData == "\n")
                                         SendKeys.SendWait("{ENTER}");
@@ -384,11 +435,25 @@ namespace ServerApp
                                 default:
                                     UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.UnknownCommand);
                                     break;
+                                }
+                            }
+                            catch (Exception error)
+                            {
+                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.WrongClientPassword + " " + error.ToString());
+
+                                if (LoggingEnabled)
+                                {
+                                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
+                                    LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                                    LogFile.Close();
+                                }
                             }
                         }
                     }
 
                     Interlocked.Exchange(ref changingConnectedClients, 0);
+
+                    Thread.Sleep(5);
                 }
                 else
                 {
@@ -442,7 +507,7 @@ namespace ServerApp
 
                     if (LoggingEnabled)
                     {
-                        StreamWriter LogFile = File.CreateText("log.txt");
+                        StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                         LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                         LogFile.Close();
                     }
@@ -486,7 +551,7 @@ namespace ServerApp
 
                         if (LoggingEnabled)
                         {
-                            StreamWriter LogFile = File.CreateText("log.txt");
+                            StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                             LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                             LogFile.Close();
                         }
@@ -499,7 +564,7 @@ namespace ServerApp
 
                 if (LoggingEnabled)
                 {
-                    StreamWriter LogFile = File.CreateText("log.txt");
+                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
                     LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
                     LogFile.Close();
                 }
@@ -510,11 +575,15 @@ namespace ServerApp
             stopConnectedClientsManager = true;
 
             tcpServerStopped = true;
+
             while (!connectedClientsManagerStopped) { }
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
-                serverStateButton.Content = Properties.Resources.StartServer;
-                serverStateButton.IsEnabled = true;
-            }));
+
+            if (System.Windows.Application.Current != null)
+                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
+                    if (serverStateButton != null) serverStateButton.Content = Properties.Resources.StartServer;
+                    if (serverStateButton != null) serverStateButton.IsEnabled = true;
+                    if (startServerTrayButton != null) startServerTrayButton.IsEnabled = true;
+                }));
         }
 
         private void UdpServer()
@@ -546,10 +615,11 @@ namespace ServerApp
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            SettingsWindow settingsWindow = new SettingsWindow(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString());
+            SettingsWindow settingsWindow = new SettingsWindow(port, password, language, enableWindowLogCheckbox.IsChecked.Value.ToString(), autostart);
             settingsWindow.port += value => port = value;
             settingsWindow.password += value => password = value;
             settingsWindow.language += value => language = value;
+            settingsWindow.autostart += value => autostart = value;
 
             settingsChanged = false;
             settingsWindow.settingsChanged += value => settingsChanged = value;
@@ -562,6 +632,44 @@ namespace ServerApp
         {
             if (settingsChanged)
                 ChangeUILanguage(language);
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            //clean up notifyicon (would otherwise stay open until application finishes)
+            MyNotifyIcon.Dispose();
+            
+            if (!tcpServerStopped)
+                serverStateButton_Click(null, null);
+
+            base.OnClosing(e);
+        }
+
+        private void StartServerTray_Click(object sender, RoutedEventArgs e)
+        {
+            serverStateButton_Click(null, null);
+        }
+
+        private void StopServerTray_Click(object sender, RoutedEventArgs e)
+        {
+            serverStateButton_Click(null, null);
+        }
+
+        private void ShowWindowTray_Click(object sender, RoutedEventArgs e)
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            MyNotifyIcon.Visibility = Visibility.Collapsed;
+        }
+
+        private void ExitAppTray_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void MyNotifyIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
+        {
+            ShowWindowTray_Click(null, null);
         }
     }
 }
