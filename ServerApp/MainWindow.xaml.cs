@@ -346,7 +346,13 @@ namespace ServerApp
                                     UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " Przesunięcie: " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
                                     break;
                                 case Commands.SEND_WHEEL_MOUSE: //odebranie polecenia obrócenia rolki myszy
-
+                                    Int32 mouseWheelSliderValue = BitConverter.ToInt32(dataDecoded, 4);
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " mouseWheelSliderValue: " + mouseWheelSliderValue.ToString());
+                                    if (mouseWheelSliderValue < -1 || mouseWheelSliderValue > 1)
+                                    {
+                                        const Int32 wheelCoef = 10;
+                                        mouse_event((uint)MouseEventFlags.WHEEL, 0, 0, (uint)(wheelCoef * mouseWheelSliderValue), 0);
+                                    }
                                     break;
                                 case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
                                     keybd_event((byte)KeyboardEventFlags.NEXT, 0, 0, 0);
@@ -376,6 +382,7 @@ namespace ServerApp
                                     process.Start();
                                     break;
                                 default:
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.UnknownCommand);
                                     break;
                             }
                         }
