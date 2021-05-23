@@ -313,6 +313,15 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Received unknown command.
+        /// </summary>
+        public static string UnknownCommand {
+            get {
+                return ResourceManager.GetString("UnknownCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to WRONG CLIENT PASSWORD:.
         /// </summary>
         public static string WrongClientPassword {

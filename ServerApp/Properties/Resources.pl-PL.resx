@@ -198,6 +198,9 @@
   <data name="TurnOnLogging" xml:space="preserve">
     <value>Włącz diagnostykę</value>
   </data>
+  <data name="UnknownCommand" xml:space="preserve">
+    <value>Odebrano nieznane polecenie</value>
+  </data>
   <data name="WrongClientPassword" xml:space="preserve">
     <value>NIEPRAWIDLOWE HASLO W KONFIGURACJI KLIENTA:</value>
   </data>

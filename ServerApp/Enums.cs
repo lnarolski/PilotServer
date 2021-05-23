@@ -20,5 +20,6 @@ namespace ServerApp
         SEND_STOP,
         SEND_VOLUP,
         SEND_OPEN_WEBPAGE,
+        SEND_WHEEL_MOUSE,
     }
 }
