@@ -159,6 +159,12 @@
   <data name="Information" xml:space="preserve">
     <value>Information</value>
   </data>
+  <data name="Message" xml:space="preserve">
+    <value>Message:</value>
+  </data>
+  <data name="Movement" xml:space="preserve">
+    <value>Movement:</value>
+  </data>
   <data name="OK" xml:space="preserve">
     <value>OK</value>
   </data>

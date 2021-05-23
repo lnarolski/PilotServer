@@ -368,7 +368,7 @@ namespace ServerApp
                                         SendKeys.SendWait("{ENTER}");
                                     else
                                         SendKeys.SendWait(responseData);
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " Wiadomość: " + responseData);
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " " + Properties.Resources.Message + " " + responseData);
                                     break;
                                 case Commands.SEND_BACKSPACE: //odebranie klawisza BACKSPACE
                                     SendKeys.SendWait("{BACKSPACE}");
@@ -394,7 +394,7 @@ namespace ServerApp
                                     point.X = System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX);
                                     point.Y = System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY);
                                     System.Windows.Forms.Cursor.Position = point;
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " Przesunięcie: " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " " + Properties.Resources.Movement + " " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
                                     break;
                                 case Commands.SEND_WHEEL_MOUSE: //odebranie polecenia obrócenia rolki myszy
                                     Int32 mouseWheelSliderValue = BitConverter.ToInt32(dataDecoded, 4);
