@@ -111,7 +111,7 @@ namespace ServerApp
         {
             CultureInfo cultureInfo = CultureInfo.CurrentCulture;
             language = cultureInfo.TwoLetterISOLanguageName == "pl" ? "pl" : "en";
-                
+
             string[] commandLineArgs = Environment.GetCommandLineArgs();
 
             bool hideWindow = false;
@@ -186,7 +186,7 @@ namespace ServerApp
             }
 
             ChangeUILanguage(language);
-            
+
             InitializeComponent();
             MyNotifyIcon.Visibility = Visibility.Collapsed;
 
@@ -271,7 +271,8 @@ namespace ServerApp
                 stopTcpServer = true;
                 stopServerTrayButton.IsEnabled = false;
 
-                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
+                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
                     serverStateButton.Content = Properties.Resources.StoppingServer;
                     serverStateButton.IsEnabled = false;
                 }));
@@ -295,7 +296,7 @@ namespace ServerApp
                     {
                         try
                         {
-                            connectedClients[i].WriteByte((byte) 'T');
+                            connectedClients[i].WriteByte((byte)'T');
                         }
                         catch (Exception)
                         {
@@ -363,78 +364,90 @@ namespace ServerApp
                                 switch (command)
                                 {
                                     case Commands.SEND_TEXT: //odebranie tekstu
-                                    responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, dataDecoded.Length - 4);
-                                    if (responseData == "\n")
-                                        SendKeys.SendWait("{ENTER}");
-                                    else
-                                        SendKeys.SendWait(responseData);
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " " + Properties.Resources.Message + " " + responseData);
-                                    break;
-                                case Commands.SEND_BACKSPACE: //odebranie klawisza BACKSPACE
-                                    SendKeys.SendWait("{BACKSPACE}");
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                    break;
-                                case Commands.SEND_LEFT_MOUSE: //odebranie lewego przycisku myszy
-                                    mouse_event(
-                                        (uint)(MouseEventFlags.MOVE |
-                                            MouseEventFlags.LEFTDOWN | MouseEventFlags.LEFTUP),
+                                        responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, dataDecoded.Length - 4);
+                                        if (responseData == "\n")
+                                            SendKeys.SendWait("{ENTER}");
+                                        else
+                                            SendKeys.SendWait(responseData);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " " + Properties.Resources.Message + " " + responseData);
+                                        break;
+                                    case Commands.SEND_BACKSPACE: //odebranie klawisza BACKSPACE
+                                        SendKeys.SendWait("{BACKSPACE}");
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
+                                        break;
+                                    case Commands.SEND_LEFT_MOUSE: //odebranie lewego przycisku myszy
+                                        mouse_event(
+                                            (uint)(MouseEventFlags.MOVE |
+                                                MouseEventFlags.LEFTDOWN | MouseEventFlags.LEFTUP),
+                                            0, 0, 0, 0);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
+                                        break;
+                                    case Commands.SEND_RIGHT_MOUSE: //odebranie prawego przycisku myszy
+                                        mouse_event(
+                                            (uint)(MouseEventFlags.MOVE |
+                                                MouseEventFlags.RIGHTDOWN | MouseEventFlags.RIGHTUP),
+                                            0, 0, 0, 0);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
+                                        break;
+                                    case Commands.SEND_LEFT_MOUSE_LONG_PRESS_START:
+                                        mouse_event(
+                                        (uint)(MouseEventFlags.LEFTDOWN),
                                         0, 0, 0, 0);
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                    break;
-                                case Commands.SEND_RIGHT_MOUSE: //odebranie prawego przycisku myszy
-                                    mouse_event(
-                                        (uint)(MouseEventFlags.MOVE |
-                                            MouseEventFlags.RIGHTDOWN | MouseEventFlags.RIGHTUP),
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
+                                        break;
+                                    case Commands.SEND_LEFT_MOUSE_LONG_PRESS_STOP:
+                                        mouse_event(
+                                        (uint)(MouseEventFlags.LEFTUP),
                                         0, 0, 0, 0);
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                    break;
-                                case Commands.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
-                                    double moveX = BitConverter.ToDouble(dataDecoded, 4);
-                                    double moveY = BitConverter.ToDouble(dataDecoded, 12);
-                                    point.X = System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX);
-                                    point.Y = System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY);
-                                    System.Windows.Forms.Cursor.Position = point;
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " " + Properties.Resources.Movement + " " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
-                                    break;
-                                case Commands.SEND_WHEEL_MOUSE: //odebranie polecenia obrócenia rolki myszy
-                                    Int32 mouseWheelSliderValue = BitConverter.ToInt32(dataDecoded, 4);
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " mouseWheelSliderValue: " + mouseWheelSliderValue.ToString());
-                                    if (mouseWheelSliderValue < -1 || mouseWheelSliderValue > 1)
-                                    {
-                                        const Int32 wheelCoef = 10;
-                                        mouse_event((uint)MouseEventFlags.WHEEL, 0, 0, (uint)(wheelCoef * mouseWheelSliderValue), 0);
-                                    }
-                                    break;
-                                case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
-                                    keybd_event((byte)KeyboardEventFlags.NEXT, 0, 0, 0);
-                                    break;
-                                case Commands.SEND_PREVIOUS: //odebranie polecenia odtworzenia poprzedniego utworu
-                                    keybd_event((byte)KeyboardEventFlags.PREV, 0, 0, 0);
-                                    break;
-                                case Commands.SEND_STOP: //odebranie polecenia zatrzymania odtwarzania
-                                    keybd_event((byte)KeyboardEventFlags.STOP, 0, 0, 0);
-                                    break;
-                                case Commands.SEND_PLAYSTOP: //odebranie polecenia wstrzymania/wznowienia odtwarzania
-                                    keybd_event((byte)KeyboardEventFlags.PLAYPAUSE, 0, 0, 0);
-                                    break;
-                                case Commands.SEND_VOLDOWN: //odebranie polecenia podgłośnienia
-                                    keybd_event((byte)KeyboardEventFlags.VOLDOWN, 0, 0, 0);
-                                    break;
-                                case Commands.SEND_VOLUP: //odebranie polecenia ściszenia
-                                    keybd_event((byte)KeyboardEventFlags.VOLUP, 0, 0, 0);
-                                    break;
-                                case Commands.SEND_OPEN_WEBPAGE:  //odebranie polecenia otwarcia strony internetowej
-                                    System.Diagnostics.Process process = new System.Diagnostics.Process();
-                                    System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-                                    startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                                    startInfo.FileName = "cmd.exe";
-                                    startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(dataDecoded.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
-                                    process.StartInfo = startInfo;
-                                    process.Start();
-                                    break;
-                                default:
-                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.UnknownCommand);
-                                    break;
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
+                                        break;
+                                    case Commands.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
+                                        double moveX = BitConverter.ToDouble(dataDecoded, 4);
+                                        double moveY = BitConverter.ToDouble(dataDecoded, 12);
+                                        point.X = System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX);
+                                        point.Y = System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY);
+                                        System.Windows.Forms.Cursor.Position = point;
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " " + Properties.Resources.Movement + " " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
+                                        break;
+                                    case Commands.SEND_WHEEL_MOUSE: //odebranie polecenia obrócenia rolki myszy
+                                        Int32 mouseWheelSliderValue = BitConverter.ToInt32(dataDecoded, 4);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " mouseWheelSliderValue: " + mouseWheelSliderValue.ToString());
+                                        if (mouseWheelSliderValue < -1 || mouseWheelSliderValue > 1)
+                                        {
+                                            const Int32 wheelCoef = 10;
+                                            mouse_event((uint)MouseEventFlags.WHEEL, 0, 0, (uint)(wheelCoef * mouseWheelSliderValue), 0);
+                                        }
+                                        break;
+                                    case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
+                                        keybd_event((byte)KeyboardEventFlags.NEXT, 0, 0, 0);
+                                        break;
+                                    case Commands.SEND_PREVIOUS: //odebranie polecenia odtworzenia poprzedniego utworu
+                                        keybd_event((byte)KeyboardEventFlags.PREV, 0, 0, 0);
+                                        break;
+                                    case Commands.SEND_STOP: //odebranie polecenia zatrzymania odtwarzania
+                                        keybd_event((byte)KeyboardEventFlags.STOP, 0, 0, 0);
+                                        break;
+                                    case Commands.SEND_PLAYSTOP: //odebranie polecenia wstrzymania/wznowienia odtwarzania
+                                        keybd_event((byte)KeyboardEventFlags.PLAYPAUSE, 0, 0, 0);
+                                        break;
+                                    case Commands.SEND_VOLDOWN: //odebranie polecenia podgłośnienia
+                                        keybd_event((byte)KeyboardEventFlags.VOLDOWN, 0, 0, 0);
+                                        break;
+                                    case Commands.SEND_VOLUP: //odebranie polecenia ściszenia
+                                        keybd_event((byte)KeyboardEventFlags.VOLUP, 0, 0, 0);
+                                        break;
+                                    case Commands.SEND_OPEN_WEBPAGE:  //odebranie polecenia otwarcia strony internetowej
+                                        System.Diagnostics.Process process = new System.Diagnostics.Process();
+                                        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                                        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                                        startInfo.FileName = "cmd.exe";
+                                        startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(dataDecoded.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
+                                        process.StartInfo = startInfo;
+                                        process.Start();
+                                        break;
+                                    default:
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.UnknownCommand);
+                                        break;
                                 }
                             }
                             catch (Exception error)
@@ -525,7 +538,7 @@ namespace ServerApp
                             UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientConnected + " " + tcpClient.Client.RemoteEndPoint.ToString(), true);
 
 
-                            while (1 == Interlocked.Exchange(ref changingConnectedClients, 1));
+                            while (1 == Interlocked.Exchange(ref changingConnectedClients, 1)) ;
 
                             NetworkStream networkStream = tcpClient.GetStream();
                             networkStream.WriteTimeout = 1000;
@@ -543,7 +556,7 @@ namespace ServerApp
                                 }
                             }
                             Thread.Sleep(3000);
-                        }    
+                        }
                     }
                     catch (Exception error)
                     {
@@ -579,7 +592,8 @@ namespace ServerApp
             while (!connectedClientsManagerStopped) { }
 
             if (System.Windows.Application.Current != null)
-                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
+                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
                     if (serverStateButton != null) serverStateButton.Content = Properties.Resources.StartServer;
                     if (serverStateButton != null) serverStateButton.IsEnabled = true;
                     if (startServerTrayButton != null) startServerTrayButton.IsEnabled = true;
@@ -638,7 +652,7 @@ namespace ServerApp
         {
             //clean up notifyicon (would otherwise stay open until application finishes)
             MyNotifyIcon.Dispose();
-            
+
             if (!tcpServerStopped)
                 serverStateButton_Click(null, null);
 
