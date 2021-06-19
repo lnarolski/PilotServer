@@ -27,6 +27,36 @@ using System.Runtime.CompilerServices;
 
 namespace ServerApp
 {
+    public class TextBoxAttachedProperties // TextBox autoscroll
+    {
+
+        public static bool GetAutoScrollToEnd(DependencyObject obj)
+        {
+            return (bool)obj.GetValue(AutoScrollToEndProperty);
+        }
+
+        public static void SetAutoScrollToEnd(DependencyObject obj, bool value)
+        {
+            obj.SetValue(AutoScrollToEndProperty, value);
+        }
+
+        // Using a DependencyProperty as the backing store for AutoScrollToEnd.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty AutoScrollToEndProperty =
+        DependencyProperty.RegisterAttached("AutoScrollToEnd", typeof(bool), typeof(TextBoxAttachedProperties), new PropertyMetadata(false, AutoScrollToEndPropertyChanged));
+
+        private static void AutoScrollToEndPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is System.Windows.Controls.TextBox textbox && e.NewValue is bool mustAutoScroll && mustAutoScroll)
+            {
+                textbox.TextChanged += (s, ee) => AutoScrollToEnd(s, ee, textbox);
+            }
+        }
+
+        private static void AutoScrollToEnd(object sender, TextChangedEventArgs e, System.Windows.Controls.TextBox textbox)
+        {
+            textbox.ScrollToEnd();
+        }
+    }
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -420,21 +450,27 @@ namespace ServerApp
                                         break;
                                     case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
                                         keybd_event((byte)KeyboardEventFlags.NEXT, 0, 0, 0);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                         break;
                                     case Commands.SEND_PREVIOUS: //odebranie polecenia odtworzenia poprzedniego utworu
                                         keybd_event((byte)KeyboardEventFlags.PREV, 0, 0, 0);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                         break;
                                     case Commands.SEND_STOP: //odebranie polecenia zatrzymania odtwarzania
                                         keybd_event((byte)KeyboardEventFlags.STOP, 0, 0, 0);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                         break;
                                     case Commands.SEND_PLAYSTOP: //odebranie polecenia wstrzymania/wznowienia odtwarzania
                                         keybd_event((byte)KeyboardEventFlags.PLAYPAUSE, 0, 0, 0);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                         break;
                                     case Commands.SEND_VOLDOWN: //odebranie polecenia podgłośnienia
                                         keybd_event((byte)KeyboardEventFlags.VOLDOWN, 0, 0, 0);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                         break;
                                     case Commands.SEND_VOLUP: //odebranie polecenia ściszenia
                                         keybd_event((byte)KeyboardEventFlags.VOLUP, 0, 0, 0);
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                         break;
                                     case Commands.SEND_OPEN_WEBPAGE:  //odebranie polecenia otwarcia strony internetowej
                                         System.Diagnostics.Process process = new System.Diagnostics.Process();
@@ -444,6 +480,7 @@ namespace ServerApp
                                         startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(dataDecoded.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
                                         process.StartInfo = startInfo;
                                         process.Start();
+                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
                                         break;
                                     default:
                                         UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.UnknownCommand);

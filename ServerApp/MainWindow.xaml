@@ -6,6 +6,7 @@
         xmlns:p="clr-namespace:ServerApp.Properties"
         xmlns:local="clr-namespace:ServerApp"
         xmlns:tb="http://www.hardcodet.net/taskbar"
+        xmlns:myAttachedProperties="clr-namespace:ServerApp"
         mc:Ignorable="d"
         Title="Pilot Server" Height="578.198" Width="636.483">
     <Grid>
@@ -48,7 +49,9 @@
                      ScrollViewer.VerticalScrollBarVisibility="Auto" 
                      ScrollViewer.CanContentScroll="True"
                      IsReadOnly="true"
-                     TextChanged="logTextBox_TextChanged"  />
+                     TextChanged="logTextBox_TextChanged"
+                     AcceptsReturn="True"
+                     myAttachedProperties:TextBoxAttachedProperties.AutoScrollToEnd="True" />
         </ScrollViewer>
         <StackPanel Grid.Row="0"
                     Grid.Column="2" />
