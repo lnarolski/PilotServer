@@ -324,6 +324,8 @@ namespace ServerApp
 
                     for (int i = connectedClients.Count - 1; i >= 0; --i) //DO ZOPTYMALIZOWANIA
                     {
+                        System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Focus(); }));
+
                         try
                         {
                             connectedClients[i].WriteByte((byte)'T');
@@ -341,6 +343,7 @@ namespace ServerApp
                             _aes = new AesCryptoServiceProvider();
                             _aes.KeySize = 256;
                             _aes.BlockSize = 128;
+                            _aes.Padding = PaddingMode.Zeros;
 
                             String responseData = String.Empty; //string wykorzystywany do przechowywania odebranych tekstów
 
