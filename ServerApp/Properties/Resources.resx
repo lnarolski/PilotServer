@@ -204,6 +204,9 @@
   <data name="StopServerTray" xml:space="preserve">
     <value>Stop server</value>
   </data>
+  <data name="ThirdPartyLicenses" xml:space="preserve">
+    <value>Third party licenses:</value>
+  </data>
   <data name="TurnOnLogging" xml:space="preserve">
     <value>Turn on logging</value>
   </data>

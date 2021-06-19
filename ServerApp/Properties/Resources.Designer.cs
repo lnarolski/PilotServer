@@ -322,6 +322,15 @@ namespace ServerApp.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Third party licenses:.
+        /// </summary>
+        public static string ThirdPartyLicenses {
+            get {
+                return ResourceManager.GetString("ThirdPartyLicenses", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Turn on logging.
         /// </summary>
         public static string TurnOnLogging {

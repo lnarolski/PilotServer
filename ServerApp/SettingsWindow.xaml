@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:ServerApp"
         mc:Ignorable="d"
         Title="{x:Static p:Resources.Settings}" Height="450" Width="800">
-    <Grid>
+    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="1*" />
             <RowDefinition Height="5*" />
@@ -19,34 +19,44 @@
             <ColumnDefinition Width="5*" />
             <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
-        <StackPanel
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
             Grid.Column="1"
             Grid.Row="1"
-            Grid.ColumnSpan="2">
-            <Label
+            Grid.ColumnSpan="2"
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch">
+            <StackPanel
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch">
+                <Label
                 Content="{x:Static p:Resources.ConnectionPort}" />
-            <TextBox
+                <TextBox
                 x:Name="connectionPortTextBox"
                 TextChanged="ConnectionPortTextBox_TextChanged"
                 />
-            <Label
+                <Label
                 Content="{x:Static p:Resources.ConnectionPassword}" />
-            <TextBox
+                <TextBox
                 x:Name="connectionPasswordTextBox"
                 />
-            <Label
+                <Label
                 Content="{x:Static p:Resources.AppLang}" />
-            <ComboBox
+                <ComboBox
                 x:Name="appLangComboBox" >
-                <ComboBoxItem IsSelected="True">Polski</ComboBoxItem>
-                <ComboBoxItem>English</ComboBoxItem>
-            </ComboBox>
-            <CheckBox
+                    <ComboBoxItem IsSelected="True">Polski</ComboBoxItem>
+                    <ComboBoxItem>English</ComboBoxItem>
+                </ComboBox>
+                <CheckBox
                 Content="{x:Static p:Resources.Autostart}"
                 Margin="20"
-                x:Name="autostartCheckBox"
-             />
-        </StackPanel>
+                x:Name="autostartCheckBox"/>
+                <Label
+                Content="{x:Static p:Resources.ThirdPartyLicenses}" />
+                <TextBox VerticalAlignment="Stretch" xml:space="preserve" IsReadOnly="True" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True">
+                    
+                </TextBox>
+            </StackPanel>
+        </ScrollViewer>
         <Button 
             Grid.Column="0" 
             Grid.ColumnSpan="2" 

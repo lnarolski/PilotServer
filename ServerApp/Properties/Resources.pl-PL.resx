@@ -201,6 +201,9 @@
   <data name="StopServerTray" xml:space="preserve">
     <value>Wyłącz serwer</value>
   </data>
+  <data name="ThirdPartyLicenses" xml:space="preserve">
+    <value>Licencje osób trzecich:</value>
+  </data>
   <data name="TurnOnLogging" xml:space="preserve">
     <value>Włącz diagnostykę</value>
   </data>
