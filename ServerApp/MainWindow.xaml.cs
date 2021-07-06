@@ -24,6 +24,7 @@ using System.Drawing;
 using System.Globalization;
 using Hardcodet.Wpf.TaskbarNotification;
 using System.Runtime.CompilerServices;
+using static ServerApp.PlaybackInfoClass;
 
 namespace ServerApp
 {
@@ -237,6 +238,8 @@ namespace ServerApp
 
             if (started)
                 serverStateButton_Click(null, null);
+
+            Test();
         }
 
         private void MainWindow_StateChanged(object sender, EventArgs e)
