@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ServerApp
 {
-    enum Commands
+    enum CommandsFromClient
     {
         SEND_TEXT = 1,
         SEND_BACKSPACE,
@@ -23,5 +23,11 @@ namespace ServerApp
         SEND_WHEEL_MOUSE,
         SEND_LEFT_MOUSE_LONG_PRESS_START,
         SEND_LEFT_MOUSE_LONG_PRESS_STOP,
+    }
+
+    enum CommandsFromServer
+    {
+        SEND_PING = 1,
+        SEND_PLAYBACK_INFO,
     }
 }
