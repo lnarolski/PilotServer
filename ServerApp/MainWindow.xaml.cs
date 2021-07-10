@@ -360,6 +360,7 @@ namespace ServerApp
                 UpdateLog(error.ToString());
             }
 
+            int pingCounter = 0;
             while (!stopConnectedClientsManager)
             {
                 if (connectedClients.Count > 0)
@@ -381,15 +382,18 @@ namespace ServerApp
                         mediaPropertiesLock = true;
                         changedLock = true;
 
-                        playbackInfoString = PlaybackInfoClass.playing.ToString() + "\u0006" + PlaybackInfoClass.artist + "\u0006" + PlaybackInfoClass.title;
+                        playbackInfoString = PlaybackInfoClass.playing.ToString() + "\u0006" + PlaybackInfoClass.artist + "\u0006" + PlaybackInfoClass.title + '\0';
 
                         command = BitConverter.GetBytes((int)CommandsFromServer.SEND_PLAYBACK_INFO);
+                        int playbackInfoStringLength = playbackInfoString.Length;
+                        byte[] playbackInfoStringLengthByte = BitConverter.GetBytes(playbackInfoStringLength);
                         data = System.Text.Encoding.UTF8.GetBytes(playbackInfoString);
 
 
-                        dataToSend = new Byte[command.Length + data.Length];
+                        dataToSend = new Byte[command.Length + playbackInfoStringLengthByte.Length + data.Length];
                         Buffer.BlockCopy(command, 0, dataToSend, 0, command.Length);
-                        Buffer.BlockCopy(data, 0, dataToSend, command.Length, data.Length);
+                        Buffer.BlockCopy(playbackInfoStringLengthByte, 0, dataToSend, command.Length, playbackInfoStringLengthByte.Length);
+                        Buffer.BlockCopy(data, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length, data.Length);
 
                         using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
                         {
@@ -416,23 +420,30 @@ namespace ServerApp
                     {
                         System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Focus(); }));
 
-                        try
-                        {
-                            connectedClients[i].Write(dataToSendEncodedPing, 0, dataToSendEncodedPing.Length);
-                        }
-                        catch (Exception)
-                        {
-                            connectedClients[i].Dispose();
-                            connectedClients.RemoveAt(i);
-                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientDisconnected);
-                            continue;
-                        }
-
-                        if (changedLock)
+                        // PING CLIENT EVERY ~5 SECONDS
+                        if (pingCounter == 1000)
                         {
                             try
                             {
+                                connectedClients[i].Write(dataToSendEncodedPing, 0, dataToSendEncodedPing.Length);
+                            }
+                            catch (Exception)
+                            {
+                                connectedClients[i].Dispose();
+                                connectedClients.RemoveAt(i);
+                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientDisconnected);
+                                continue;
+                            }
+                        }
+                        /////////////////////////////////////
+
+                        if (changedLock)
+                        {
+                            UpdateLog("changedLock: " + changedLock.ToString());
+                            try
+                            {
                                 connectedClients[i].Write(dataToSendEncoded, 0, dataToSendEncoded.Length);
+                                UpdateLog("New data send: " + dataToSendEncoded.Length);
                             }
                             catch (Exception error)
                             {
@@ -610,6 +621,11 @@ namespace ServerApp
                     Interlocked.Exchange(ref changingConnectedClients, 0);
 
                     Thread.Sleep(5);
+
+                    if (pingCounter == 1000)
+                        pingCounter = 0;
+                    else
+                        ++pingCounter;
                 }
                 else
                 {
