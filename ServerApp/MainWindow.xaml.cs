@@ -385,15 +385,21 @@ namespace ServerApp
                         playbackInfoString = PlaybackInfoClass.playing.ToString() + "\u0006" + PlaybackInfoClass.artist + "\u0006" + PlaybackInfoClass.title + '\0';
 
                         command = BitConverter.GetBytes((int)CommandsFromServer.SEND_PLAYBACK_INFO);
-                        int playbackInfoStringLength = playbackInfoString.Length;
+                        int playbackInfoStringLength = System.Text.Encoding.UTF8.GetByteCount(playbackInfoString);
                         byte[] playbackInfoStringLengthByte = BitConverter.GetBytes(playbackInfoStringLength);
                         data = System.Text.Encoding.UTF8.GetBytes(playbackInfoString);
+                        int playbackInfoThumbnailLength = 0;
+                        if (PlaybackInfoClass.thumbnail != null)
+                            playbackInfoThumbnailLength = PlaybackInfoClass.thumbnail.Length;
+                        byte[] playbackInfoThumbnailLengthByte = BitConverter.GetBytes(playbackInfoThumbnailLength);
 
-
-                        dataToSend = new Byte[command.Length + playbackInfoStringLengthByte.Length + data.Length];
+                        dataToSend = new Byte[command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length + data.Length + playbackInfoThumbnailLength];
                         Buffer.BlockCopy(command, 0, dataToSend, 0, command.Length);
                         Buffer.BlockCopy(playbackInfoStringLengthByte, 0, dataToSend, command.Length, playbackInfoStringLengthByte.Length);
-                        Buffer.BlockCopy(data, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length, data.Length);
+                        Buffer.BlockCopy(playbackInfoThumbnailLengthByte, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length, playbackInfoThumbnailLengthByte.Length);
+                        Buffer.BlockCopy(data, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length, data.Length);
+                        if (PlaybackInfoClass.thumbnail != null)
+                            Buffer.BlockCopy(PlaybackInfoClass.thumbnail, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length + data.Length, PlaybackInfoClass.thumbnail.Length);
 
                         using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
                         {
@@ -439,11 +445,9 @@ namespace ServerApp
 
                         if (changedLock)
                         {
-                            UpdateLog("changedLock: " + changedLock.ToString());
                             try
                             {
                                 connectedClients[i].Write(dataToSendEncoded, 0, dataToSendEncoded.Length);
-                                UpdateLog("New data send: " + dataToSendEncoded.Length);
                             }
                             catch (Exception error)
                             {

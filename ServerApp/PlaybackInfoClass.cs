@@ -1,17 +1,12 @@
 ﻿using System;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Media.Control;
+using Windows.Storage.Streams;
 
 namespace ServerApp
 {
-    struct PlaybackInfoStruct
-    {
-        public bool playing;
-        public string artist;
-        public string title;
-    }
-
     class PlaybackInfoClass
     {
         static bool started = false;
@@ -25,6 +20,7 @@ namespace ServerApp
         static public bool playing = false;
         static public string artist = "";
         static public string title = "";
+        static public byte[] thumbnail;
 
         public static async void Start()
         {
@@ -72,6 +68,7 @@ namespace ServerApp
                 playing = false;
                 artist = ""; 
                 title = "";
+                thumbnail = null;
             }
             else
             {
@@ -80,6 +77,20 @@ namespace ServerApp
                 playing = true;
                 artist = mediaProperties.Artist;
                 title = mediaProperties.Title;
+                var thumbnailOpenRead = mediaProperties.Thumbnail;
+                if (thumbnailOpenRead != null)
+                {
+                    var thumbnailOpenReadStream = await thumbnailOpenRead.OpenReadAsync();
+                    if (thumbnailOpenReadStream.CanRead)
+                    {
+                        thumbnail = new byte[thumbnailOpenReadStream.Size];
+                        await thumbnailOpenReadStream.ReadAsync(thumbnail.AsBuffer(), (uint)thumbnailOpenReadStream.Size, InputStreamOptions.None);
+                    }
+                    else
+                        thumbnail = null;
+                }
+                else
+                    thumbnail = null;
             }
 
             mediaPropertiesChanged = true;
