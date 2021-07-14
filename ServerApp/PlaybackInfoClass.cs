@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +21,8 @@ namespace ServerApp
         static public bool playing = false;
         static public string artist = "";
         static public string title = "";
-        static public byte[] thumbnail;
+        static public System.Drawing.Bitmap thumbnailBitmap;
+        public static byte[] thumbnail;
 
         public static async void Start()
         {
@@ -68,7 +70,7 @@ namespace ServerApp
                 playing = false;
                 artist = ""; 
                 title = "";
-                thumbnail = null;
+                thumbnailBitmap = null;
             }
             else
             {
@@ -85,12 +87,22 @@ namespace ServerApp
                     {
                         thumbnail = new byte[thumbnailOpenReadStream.Size];
                         await thumbnailOpenReadStream.ReadAsync(thumbnail.AsBuffer(), (uint)thumbnailOpenReadStream.Size, InputStreamOptions.None);
+                        using (MemoryStream ms = new MemoryStream(thumbnail))
+                        {
+                            ms.Position = 0;
+                            thumbnailBitmap = new System.Drawing.Bitmap(ms);
+                            using (MemoryStream stream = new MemoryStream())
+                            {
+                                thumbnailBitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg); // Konwersja ze względu na błąd po stronie Androida w przypadku przesyłania pliku *.png: [skia] ------ png error IDAT: CRC error [skia] ---codec->getAndroidPixels() failed.
+                                thumbnail = stream.ToArray();
+                            }
+                        }
                     }
                     else
-                        thumbnail = null;
+                        thumbnailBitmap = null;
                 }
                 else
-                    thumbnail = null;
+                    thumbnailBitmap = null;
             }
 
             mediaPropertiesChanged = true;

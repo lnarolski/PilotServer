@@ -390,7 +390,9 @@ namespace ServerApp
                         data = System.Text.Encoding.UTF8.GetBytes(playbackInfoString);
                         int playbackInfoThumbnailLength = 0;
                         if (PlaybackInfoClass.thumbnail != null)
-                            playbackInfoThumbnailLength = PlaybackInfoClass.thumbnail.Length;
+                        {
+                            playbackInfoThumbnailLength = thumbnail.Length;
+                        }
                         byte[] playbackInfoThumbnailLengthByte = BitConverter.GetBytes(playbackInfoThumbnailLength);
 
                         dataToSend = new Byte[command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length + data.Length + playbackInfoThumbnailLength];
@@ -398,8 +400,8 @@ namespace ServerApp
                         Buffer.BlockCopy(playbackInfoStringLengthByte, 0, dataToSend, command.Length, playbackInfoStringLengthByte.Length);
                         Buffer.BlockCopy(playbackInfoThumbnailLengthByte, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length, playbackInfoThumbnailLengthByte.Length);
                         Buffer.BlockCopy(data, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length, data.Length);
-                        if (PlaybackInfoClass.thumbnail != null)
-                            Buffer.BlockCopy(PlaybackInfoClass.thumbnail, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length + data.Length, PlaybackInfoClass.thumbnail.Length);
+                        if (thumbnail != null)
+                            Buffer.BlockCopy(thumbnail, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length + data.Length, thumbnail.Length);
 
                         using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
                         {
