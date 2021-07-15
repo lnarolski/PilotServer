@@ -114,7 +114,6 @@ namespace ServerApp
         }
 
         Thread tcpServer;
-        Thread udpServer;
 
         bool tcpServerStopped = true;
         bool ucpServerStopped = true;
@@ -360,7 +359,8 @@ namespace ServerApp
                 UpdateLog(error.ToString());
             }
 
-            int pingCounter = 0;
+            DateTime pingLastTime = DateTime.Now;
+
             while (!stopConnectedClientsManager)
             {
                 if (connectedClients.Count > 0)
@@ -424,12 +424,13 @@ namespace ServerApp
                         }
                     }
 
+                    bool timeToPingClients = (DateTime.Now - pingLastTime).Seconds > 5;
                     for (int i = connectedClients.Count - 1; i >= 0; --i) //DO ZOPTYMALIZOWANIA
                     {
                         System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Focus(); }));
 
                         // PING CLIENT EVERY ~5 SECONDS
-                        if (pingCounter == 1000)
+                        if (timeToPingClients)
                         {
                             try
                             {
@@ -505,6 +506,7 @@ namespace ServerApp
                             if (dataDecoded.Length == 0)
                                 continue;
 
+                            // TODO: Dodać przetwarzanie całych strumieni przesyłanych komend
                             CommandsFromClient commandFromClient = (CommandsFromClient)BitConverter.ToInt32(dataDecoded, 0); //wyodrębnienie odebranej komendy
                             try
                             {
@@ -618,6 +620,9 @@ namespace ServerApp
                         }
                     }
 
+                    if (timeToPingClients)
+                        pingLastTime = DateTime.Now;
+
                     if (changedLock)
                     {
                         PlaybackInfoClass.mediaPropertiesChanged = false;
@@ -626,12 +631,7 @@ namespace ServerApp
                     
                     Interlocked.Exchange(ref changingConnectedClients, 0);
 
-                    Thread.Sleep(5);
-
-                    if (pingCounter == 1000)
-                        pingCounter = 0;
-                    else
-                        ++pingCounter;
+                    Thread.Sleep(200);
                 }
                 else
                 {
