@@ -128,7 +128,18 @@ namespace ServerApp
         bool LoggingEnabled = false;
         System.Drawing.Point point = new System.Drawing.Point(); //Point wykorzystywany do zadawania pozycji kursora
         List<TcpClient> connectedTcpClients = new List<TcpClient>();
-        List<NetworkStream> connectedClients = new List<NetworkStream>();
+
+        class ConnectedClient
+        {
+            public NetworkStream networkStream { get; set; }
+            public bool justConnected { get; set; }
+
+            public ConnectedClient()
+            {
+                justConnected = true;
+            }
+        }
+        List<ConnectedClient> connectedClients = new List<ConnectedClient>();
 
         Int32 changingConnectedClients = 0;
 
@@ -434,11 +445,11 @@ namespace ServerApp
                         {
                             try
                             {
-                                connectedClients[i].Write(dataToSendEncodedPing, 0, dataToSendEncodedPing.Length);
+                                connectedClients[i].networkStream.Write(dataToSendEncodedPing, 0, dataToSendEncodedPing.Length);
                             }
                             catch (Exception)
                             {
-                                connectedClients[i].Dispose();
+                                connectedClients[i].networkStream.Dispose();
                                 connectedClients.RemoveAt(i);
                                 UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientDisconnected);
                                 continue;
@@ -446,11 +457,12 @@ namespace ServerApp
                         }
                         /////////////////////////////////////
 
-                        if (changedLock)
+                        if (changedLock || connectedClients[i].justConnected)
                         {
                             try
                             {
-                                connectedClients[i].Write(dataToSendEncoded, 0, dataToSendEncoded.Length);
+                                connectedClients[i].networkStream.Write(dataToSendEncoded, 0, dataToSendEncoded.Length);
+                                connectedClients[i].justConnected = false;
                             }
                             catch (Exception error)
                             {
@@ -458,11 +470,11 @@ namespace ServerApp
                             }
                         }
 
-                        if (connectedClients[i].DataAvailable)
+                        if (connectedClients[i].networkStream.DataAvailable)
                         {
                             String responseData = String.Empty; //string wykorzystywany do przechowywania odebranych tekstów
 
-                            Int32 bytes = connectedClients[i].Read(buffer, 0, buffer.Length); //odczyt danych z bufora
+                            Int32 bytes = connectedClients[i].networkStream.Read(buffer, 0, buffer.Length); //odczyt danych z bufora
 
                             data = new Byte[bytes];
                             Array.Copy(buffer, data, bytes);
@@ -657,13 +669,14 @@ namespace ServerApp
                 }
                 else
                 {
+                    PlaybackInfoClass.mediaPropertiesChanged = true;
                     Thread.Sleep(500);
                 }
             }
 
             foreach (var item in connectedClients)
             {
-                item.Dispose();
+                item.networkStream.Dispose();
             }
             connectedClients.Clear();
 
@@ -731,7 +744,9 @@ namespace ServerApp
 
                             NetworkStream networkStream = tcpClient.GetStream();
                             networkStream.WriteTimeout = 1000;
-                            connectedClients.Add(networkStream);
+                            ConnectedClient connectedClient = new ConnectedClient();
+                            connectedClient.networkStream = networkStream;
+                            connectedClients.Add(connectedClient);
 
                             Interlocked.Exchange(ref changingConnectedClients, 0);
                         }

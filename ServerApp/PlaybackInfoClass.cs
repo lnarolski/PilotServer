@@ -29,6 +29,8 @@ namespace ServerApp
             globalSystemMediaTransportControlsSessionManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
             globalSystemMediaTransportControlsSession = globalSystemMediaTransportControlsSessionManager.GetCurrentSession();
 
+            SetPlaybackInfoMediaProperties();
+
             globalSystemMediaTransportControlsSessionManager.CurrentSessionChanged += GlobalSystemMediaTransportControlsSessionManager_CurrentSessionChanged;
 
             if (globalSystemMediaTransportControlsSession != null)
@@ -56,7 +58,7 @@ namespace ServerApp
             }
         }
 
-        private static async void GlobalSystemMediaTransportControlsSession_MediaPropertiesChanged(GlobalSystemMediaTransportControlsSession sender, MediaPropertiesChangedEventArgs args)
+        private static async void SetPlaybackInfoMediaProperties()
         {
             while (mediaPropertiesLock)
             {
@@ -68,7 +70,7 @@ namespace ServerApp
             if (globalSystemMediaTransportControlsSession == null)
             {
                 playing = false;
-                artist = ""; 
+                artist = "";
                 title = "";
                 thumbnailBitmap = null;
             }
@@ -107,6 +109,11 @@ namespace ServerApp
 
             mediaPropertiesChanged = true;
             mediaPropertiesLock = false;
+        }
+
+        private static void GlobalSystemMediaTransportControlsSession_MediaPropertiesChanged(GlobalSystemMediaTransportControlsSession sender, MediaPropertiesChangedEventArgs args)
+        {
+            SetPlaybackInfoMediaProperties();
         }
 
         public static void Stop()
