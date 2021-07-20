@@ -327,11 +327,11 @@ namespace ServerApp
             stopConnectedClientsManager = false;
             connectedClientsManagerStopped = false;
 
-            Byte[] buffer = new Byte[9999]; //bufor do odbioru bajtów danych
+            byte[] buffer = new byte[9999]; //bufor do odbioru bajtów danych
 
-            Byte[] commandPing;
-            Byte[] dataToSendPing;
-            Byte[] dataToSendEncodedPing = new byte[0];
+            byte[] commandPing;
+            byte[] dataToSendPing;
+            byte[] dataToSendEncodedPing = new byte[0];
             commandPing = BitConverter.GetBytes((int)CommandsFromServer.SEND_PING);
 
             AesCryptoServiceProvider _aes;
@@ -340,7 +340,8 @@ namespace ServerApp
             _aes.BlockSize = 128;
             _aes.Padding = PaddingMode.Zeros;
 
-            dataToSendPing = new Byte[commandPing.Length];
+            dataToSendPing = new byte[commandPing.Length];
+            byte[] dataToSendEncodedPingWithLength = new byte[0];
             Buffer.BlockCopy(commandPing, 0, dataToSendPing, 0, commandPing.Length);
 
             try
@@ -364,6 +365,10 @@ namespace ServerApp
                         dataToSendEncodedPing = stream.ToArray();
                     }
                 }
+
+                dataToSendEncodedPingWithLength = new byte[sizeof(int) + dataToSendEncodedPing.Length];
+                Buffer.BlockCopy(BitConverter.GetBytes(dataToSendEncodedPing.Length), 0, dataToSendEncodedPingWithLength, 0, sizeof(int));
+                Buffer.BlockCopy(dataToSendEncodedPing, 0, dataToSendEncodedPingWithLength, sizeof(int), dataToSendEncodedPing.Length);
             }
             catch (Exception error)
             {
@@ -382,10 +387,11 @@ namespace ServerApp
 
                     string playbackInfoString;
 
-                    Byte[] command = new byte[0];
-                    Byte[] data = new byte [0];
-                    Byte[] dataToSend = new byte[0];
-                    Byte[] dataToSendEncoded = new byte[0];
+                    byte[] command = new byte[0];
+                    byte[] data = new byte[0];
+                    byte[] dataToSend = new byte[0];
+                    byte[] dataToSendEncoded = new byte[0];
+                    byte[] dataToSendEncodedWithLength = new byte[0];
 
                     if (PlaybackInfoClass.mediaPropertiesChanged)
                     {
@@ -433,19 +439,21 @@ namespace ServerApp
                                 dataToSendEncoded = stream.ToArray();
                             }
                         }
+
+                        dataToSendEncodedWithLength = new byte[sizeof(int) + dataToSendEncoded.Length];
+                        Buffer.BlockCopy(BitConverter.GetBytes(dataToSendEncoded.Length), 0, dataToSendEncodedWithLength, 0, sizeof(int));
+                        Buffer.BlockCopy(dataToSendEncoded, 0, dataToSendEncodedWithLength, sizeof(int), dataToSendEncoded.Length);
                     }
 
                     bool timeToPingClients = (DateTime.Now - pingLastTime).Seconds > 5;
                     for (int i = connectedClients.Count - 1; i >= 0; --i) //DO ZOPTYMALIZOWANIA
                     {
-                        System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Focus(); }));
-
                         // PING CLIENT EVERY ~5 SECONDS
                         if (timeToPingClients)
                         {
                             try
                             {
-                                connectedClients[i].networkStream.Write(dataToSendEncodedPing, 0, dataToSendEncodedPing.Length);
+                                connectedClients[i].networkStream.Write(dataToSendEncodedPingWithLength, 0, dataToSendEncodedPingWithLength.Length);
                             }
                             catch (Exception)
                             {
@@ -461,7 +469,7 @@ namespace ServerApp
                         {
                             try
                             {
-                                connectedClients[i].networkStream.Write(dataToSendEncoded, 0, dataToSendEncoded.Length);
+                                connectedClients[i].networkStream.Write(dataToSendEncodedWithLength, 0, dataToSendEncodedWithLength.Length);
                                 connectedClients[i].justConnected = false;
                             }
                             catch (Exception error)
@@ -476,77 +484,66 @@ namespace ServerApp
 
                             Int32 bytes = connectedClients[i].networkStream.Read(buffer, 0, buffer.Length); //odczyt danych z bufora
 
-                            data = new Byte[bytes];
-                            Array.Copy(buffer, data, bytes);
-                            Byte[] dataDecoded = null;
-
-                            try
+                            for (int position = 0; position < bytes - sizeof(int);)
                             {
-                                using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
+                                int messageLength = BitConverter.ToInt32(buffer, position);
+                                position += sizeof(int);
+
+                                if (position + messageLength > bytes)
+                                    break; //odebrano niekompletną wiadomość
+
+                                data = new Byte[messageLength];
+                                Buffer.BlockCopy(buffer, position, data, 0, messageLength);
+                                Byte[] dataDecoded = null;
+
+                                position += messageLength;
+
+                                try
                                 {
-                                    using (var MemoryStream = new MemoryStream())
+                                    using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
                                     {
-                                        _aes.Key = pass.GetBytes(_aes.KeySize / 8);
-                                        _aes.IV = pass.GetBytes(_aes.BlockSize / 8);
-
-                                        var proc = _aes.CreateDecryptor();
-                                        using (var crypto = new CryptoStream(MemoryStream, proc, CryptoStreamMode.Write))
+                                        using (var MemoryStream = new MemoryStream())
                                         {
-                                            crypto.Write(data, 0, data.Length);
-                                            crypto.Clear();
-                                            crypto.Close();
-                                        }
-                                        MemoryStream.Close();
+                                            _aes.Key = pass.GetBytes(_aes.KeySize / 8);
+                                            _aes.IV = pass.GetBytes(_aes.BlockSize / 8);
 
-                                        dataDecoded = MemoryStream.ToArray();
+                                            var proc = _aes.CreateDecryptor();
+                                            using (var crypto = new CryptoStream(MemoryStream, proc, CryptoStreamMode.Write))
+                                            {
+                                                crypto.Write(data, 0, data.Length);
+                                                crypto.Clear();
+                                                crypto.Close();
+                                            }
+                                            MemoryStream.Close();
+
+                                            dataDecoded = MemoryStream.ToArray();
+                                        }
                                     }
                                 }
-                            }
-                            catch (Exception error)
-                            {
-                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.WrongClientPassword + " " + error.ToString());
-
-                                if (LoggingEnabled)
+                                catch (Exception error)
                                 {
-                                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
-                                    LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
-                                    LogFile.Close();
-                                }
-                                continue;
-                            }
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.WrongClientPassword + " " + error.ToString());
 
-                            if (dataDecoded.Length <= sizeof(int))
-                                continue;
-
-                            // Przetwarzanie odebranych poleceń z zdeszyfrowanej wiadomości
-                            for (int receivedMessagePosition = 0; receivedMessagePosition < dataDecoded.Length;)
-                            {
-                                int receivedMessageSize = BitConverter.ToInt32(dataDecoded, receivedMessagePosition);
-                                if (receivedMessageSize == 0)
-                                {
-                                    receivedMessagePosition += 4;
+                                    if (LoggingEnabled)
+                                    {
+                                        StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
+                                        LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                                        LogFile.Close();
+                                    }
                                     continue;
                                 }
 
-                                receivedMessagePosition += sizeof(int);
-                                if (receivedMessageSize + receivedMessagePosition > dataDecoded.Length)
-                                {
-                                    receivedMessagePosition = dataDecoded.Length;
+                                if (dataDecoded.Length <= sizeof(CommandsFromClient))
                                     continue;
-                                }
 
-                                byte[] receivedMessage = new byte[receivedMessageSize];
-                                Buffer.BlockCopy(dataDecoded, receivedMessagePosition, receivedMessage, 0, receivedMessageSize);
-                                receivedMessagePosition += receivedMessageSize;
-
-                                CommandsFromClient commandFromClient = (CommandsFromClient)BitConverter.ToInt32(receivedMessage, 0); //wyodrębnienie odebranej komendy
+                                CommandsFromClient commandFromClient = (CommandsFromClient)BitConverter.ToInt32(dataDecoded, 0); //wyodrębnienie odebranej komendy
 
                                 try
                                 {
                                     switch (commandFromClient)
                                     {
                                         case CommandsFromClient.SEND_TEXT: //odebranie tekstu
-                                            responseData = System.Text.Encoding.UTF8.GetString(receivedMessage, 4, receivedMessage.Length - 4);
+                                            responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, dataDecoded.Length - 4);
                                             if (responseData == "\n")
                                                 SendKeys.SendWait("{ENTER}");
                                             else
@@ -584,15 +581,15 @@ namespace ServerApp
                                             UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
                                             break;
                                         case CommandsFromClient.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
-                                            double moveX = BitConverter.ToDouble(receivedMessage, 4);
-                                            double moveY = BitConverter.ToDouble(receivedMessage, 12);
+                                            double moveX = BitConverter.ToDouble(dataDecoded, 4);
+                                            double moveY = BitConverter.ToDouble(dataDecoded, 12);
                                             point.X = System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX);
                                             point.Y = System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY);
                                             System.Windows.Forms.Cursor.Position = point;
                                             UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString() + " " + Properties.Resources.Movement + " " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
                                             break;
                                         case CommandsFromClient.SEND_WHEEL_MOUSE: //odebranie polecenia obrócenia rolki myszy
-                                            Int32 mouseWheelSliderValue = BitConverter.ToInt32(receivedMessage, 4);
+                                            Int32 mouseWheelSliderValue = BitConverter.ToInt32(dataDecoded, 4);
                                             UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString() + " mouseWheelSliderValue: " + mouseWheelSliderValue.ToString());
                                             if (mouseWheelSliderValue < -1 || mouseWheelSliderValue > 1)
                                             {
@@ -629,7 +626,7 @@ namespace ServerApp
                                             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                                             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
                                             startInfo.FileName = "cmd.exe";
-                                            startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(receivedMessage.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
+                                            startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(dataDecoded.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
                                             process.StartInfo = startInfo;
                                             process.Start();
                                             UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
@@ -662,10 +659,10 @@ namespace ServerApp
                         PlaybackInfoClass.mediaPropertiesChanged = false;
                         mediaPropertiesLock = false;
                     }
-                    
+
                     Interlocked.Exchange(ref changingConnectedClients, 0);
 
-                    Thread.Sleep(300);
+                    Thread.Sleep(5);
                 }
                 else
                 {
@@ -692,6 +689,7 @@ namespace ServerApp
 
             while (!connectedClientsManagerStopped) ;
             Thread connectedClientsManagerThread = new Thread(new ThreadStart(ConnectedClientsManager));
+            connectedClientsManagerThread.IsBackground = true;
             connectedClientsManagerThread.Start();
 
             System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = Properties.Resources.StopServer; }));
@@ -807,13 +805,17 @@ namespace ServerApp
         private void UpdateLog(string newMessage, bool ignoreLogConfiguration = false)
         {
             if (windowLogEnabled || ignoreLogConfiguration)
-                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Text += newMessage + "\n"; }));
+                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { 
+                    logTextBox.Text += newMessage + "\n";
+                    logTextBox.Focus();
+                }));
         }
 
         private void logTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             logTextBox.CaretIndex = logTextBox.Text.Length;
             logTextBox.ScrollToEnd();
+            logTextBox.Focus();
         }
 
         private void EnableWindowLogCheckbox_Checked(object sender, RoutedEventArgs e)
