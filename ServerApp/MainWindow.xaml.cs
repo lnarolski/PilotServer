@@ -399,7 +399,7 @@ namespace ServerApp
                         mediaPropertiesLock = true;
                         changedLock = true;
 
-                        playbackInfoString = PlaybackInfoClass.playing.ToString() + "\u0006" + PlaybackInfoClass.artist + "\u0006" + PlaybackInfoClass.title + '\0';
+                        playbackInfoString = PlaybackInfoClass.artist + "\u0006" + PlaybackInfoClass.title + '\0';
 
                         command = BitConverter.GetBytes((int)CommandsFromServer.SEND_PLAYBACK_INFO);
                         int playbackInfoStringLength = System.Text.Encoding.UTF8.GetByteCount(playbackInfoString);

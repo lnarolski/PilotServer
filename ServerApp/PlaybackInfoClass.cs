@@ -18,7 +18,6 @@ namespace ServerApp
         static GlobalSystemMediaTransportControlsSessionManager globalSystemMediaTransportControlsSessionManager;
         static GlobalSystemMediaTransportControlsSession globalSystemMediaTransportControlsSession;
 
-        static public bool playing = false;
         static public string artist = "";
         static public string title = "";
         static public System.Drawing.Bitmap thumbnailBitmap;
@@ -69,16 +68,30 @@ namespace ServerApp
 
             if (globalSystemMediaTransportControlsSession == null)
             {
-                playing = false;
                 artist = "";
                 title = "";
                 thumbnailBitmap = null;
             }
             else
             {
-                var mediaProperties = await globalSystemMediaTransportControlsSession.TryGetMediaPropertiesAsync();
+                GlobalSystemMediaTransportControlsSessionMediaProperties mediaProperties = null;
 
-                playing = true;
+                try
+                {
+                    mediaProperties = await globalSystemMediaTransportControlsSession.TryGetMediaPropertiesAsync();
+                }
+                catch (Exception ex)
+                {
+                    artist = "";
+                    title = "";
+                    thumbnail = null;
+
+                    mediaPropertiesChanged = true;
+                    mediaPropertiesLock = false;
+
+                    return;
+                }
+
                 artist = mediaProperties.Artist;
                 title = mediaProperties.Title;
                 var thumbnailOpenRead = mediaProperties.Thumbnail;
@@ -101,10 +114,10 @@ namespace ServerApp
                         }
                     }
                     else
-                        thumbnailBitmap = null;
+                        thumbnail = null;
                 }
                 else
-                    thumbnailBitmap = null;
+                    thumbnail = null;
             }
 
             mediaPropertiesChanged = true;
