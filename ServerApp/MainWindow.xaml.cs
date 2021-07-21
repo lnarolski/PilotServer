@@ -459,7 +459,7 @@ namespace ServerApp
                             {
                                 connectedClients[i].networkStream.Dispose();
                                 connectedClients.RemoveAt(i);
-                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientDisconnected);
+                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientDisconnected, true);
                                 continue;
                             }
                         }
