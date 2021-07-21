@@ -631,6 +631,9 @@ namespace ServerApp
                                             process.Start();
                                             UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
                                             break;
+                                        case CommandsFromClient.SEND_PING:
+
+                                            break;
                                         default:
                                             UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.UnknownCommand);
                                             break;

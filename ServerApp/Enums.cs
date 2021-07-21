@@ -23,6 +23,7 @@ namespace ServerApp
         SEND_WHEEL_MOUSE,
         SEND_LEFT_MOUSE_LONG_PRESS_START,
         SEND_LEFT_MOUSE_LONG_PRESS_STOP,
+        SEND_PING,
     }
 
     enum CommandsFromServer
