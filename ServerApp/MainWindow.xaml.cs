@@ -24,6 +24,7 @@ using System.Drawing;
 using System.Globalization;
 using Hardcodet.Wpf.TaskbarNotification;
 using System.Runtime.CompilerServices;
+using static ServerApp.PlaybackInfoClass;
 
 namespace ServerApp
 {
@@ -113,7 +114,6 @@ namespace ServerApp
         }
 
         Thread tcpServer;
-        Thread udpServer;
 
         bool tcpServerStopped = true;
         bool ucpServerStopped = true;
@@ -128,7 +128,18 @@ namespace ServerApp
         bool LoggingEnabled = false;
         System.Drawing.Point point = new System.Drawing.Point(); //Point wykorzystywany do zadawania pozycji kursora
         List<TcpClient> connectedTcpClients = new List<TcpClient>();
-        List<NetworkStream> connectedClients = new List<NetworkStream>();
+
+        class ConnectedClient
+        {
+            public NetworkStream networkStream { get; set; }
+            public bool justConnected { get; set; }
+
+            public ConnectedClient()
+            {
+                justConnected = true;
+            }
+        }
+        List<ConnectedClient> connectedClients = new List<ConnectedClient>();
 
         Int32 changingConnectedClients = 0;
 
@@ -311,10 +322,60 @@ namespace ServerApp
 
         private void ConnectedClientsManager()
         {
+            PlaybackInfoClass.Start();
+
             stopConnectedClientsManager = false;
             connectedClientsManagerStopped = false;
 
-            Byte[] buffer = new Byte[9999]; //bufor do odbioru bajtów danych
+            byte[] buffer = new byte[9999]; //bufor do odbioru bajtów danych
+
+            byte[] commandPing;
+            byte[] dataToSendPing;
+            byte[] dataToSendEncodedPing = new byte[0];
+            commandPing = BitConverter.GetBytes((int)CommandsFromServer.SEND_PING);
+
+            AesCryptoServiceProvider _aes;
+            _aes = new AesCryptoServiceProvider();
+            _aes.KeySize = 256;
+            _aes.BlockSize = 128;
+            _aes.Padding = PaddingMode.Zeros;
+
+            dataToSendPing = new byte[commandPing.Length];
+            byte[] dataToSendEncodedPingWithLength = new byte[0];
+            Buffer.BlockCopy(commandPing, 0, dataToSendPing, 0, commandPing.Length);
+
+            try
+            {
+                using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
+                {
+                    using (var stream = new MemoryStream())
+                    {
+                        _aes.Key = pass.GetBytes(_aes.KeySize / 8);
+                        _aes.IV = pass.GetBytes(_aes.BlockSize / 8);
+
+                        var proc = _aes.CreateEncryptor();
+                        using (var crypto = new CryptoStream(stream, proc, CryptoStreamMode.Write))
+                        {
+                            crypto.Write(dataToSendPing, 0, dataToSendPing.Length);
+                            crypto.Clear();
+                            crypto.Close();
+                        }
+                        stream.Close();
+
+                        dataToSendEncodedPing = stream.ToArray();
+                    }
+                }
+
+                dataToSendEncodedPingWithLength = new byte[sizeof(int) + dataToSendEncodedPing.Length];
+                Buffer.BlockCopy(BitConverter.GetBytes(dataToSendEncodedPing.Length), 0, dataToSendEncodedPingWithLength, 0, sizeof(int));
+                Buffer.BlockCopy(dataToSendEncodedPing, 0, dataToSendEncodedPingWithLength, sizeof(int), dataToSendEncodedPing.Length);
+            }
+            catch (Exception error)
+            {
+                UpdateLog(error.ToString());
+            }
+
+            DateTime pingLastTime = DateTime.Now;
 
             while (!stopConnectedClientsManager)
             {
@@ -322,186 +383,284 @@ namespace ServerApp
                 {
                     while (1 == Interlocked.Exchange(ref changingConnectedClients, 1)) ;
 
+                    bool changedLock = false;
+
+                    string playbackInfoString;
+
+                    byte[] command = new byte[0];
+                    byte[] data = new byte[0];
+                    byte[] dataToSend = new byte[0];
+                    byte[] dataToSendEncoded = new byte[0];
+                    byte[] dataToSendEncodedWithLength = new byte[0];
+
+                    if (PlaybackInfoClass.mediaPropertiesChanged)
+                    {
+                        while (PlaybackInfoClass.mediaPropertiesLock) ;
+                        mediaPropertiesLock = true;
+                        changedLock = true;
+
+                        playbackInfoString = PlaybackInfoClass.artist + "\u0006" + PlaybackInfoClass.title + '\0';
+
+                        command = BitConverter.GetBytes((int)CommandsFromServer.SEND_PLAYBACK_INFO);
+                        int playbackInfoStringLength = System.Text.Encoding.UTF8.GetByteCount(playbackInfoString);
+                        byte[] playbackInfoStringLengthByte = BitConverter.GetBytes(playbackInfoStringLength);
+                        data = System.Text.Encoding.UTF8.GetBytes(playbackInfoString);
+                        int playbackInfoThumbnailLength = 0;
+                        if (PlaybackInfoClass.thumbnail != null)
+                        {
+                            playbackInfoThumbnailLength = thumbnail.Length;
+                        }
+                        byte[] playbackInfoThumbnailLengthByte = BitConverter.GetBytes(playbackInfoThumbnailLength);
+
+                        dataToSend = new Byte[command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length + data.Length + playbackInfoThumbnailLength];
+                        Buffer.BlockCopy(command, 0, dataToSend, 0, command.Length);
+                        Buffer.BlockCopy(playbackInfoStringLengthByte, 0, dataToSend, command.Length, playbackInfoStringLengthByte.Length);
+                        Buffer.BlockCopy(playbackInfoThumbnailLengthByte, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length, playbackInfoThumbnailLengthByte.Length);
+                        Buffer.BlockCopy(data, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length, data.Length);
+                        if (thumbnail != null)
+                            Buffer.BlockCopy(thumbnail, 0, dataToSend, command.Length + playbackInfoStringLengthByte.Length + playbackInfoThumbnailLengthByte.Length + data.Length, thumbnail.Length);
+
+                        using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
+                        {
+                            using (var stream = new MemoryStream())
+                            {
+                                _aes.Key = pass.GetBytes(_aes.KeySize / 8);
+                                _aes.IV = pass.GetBytes(_aes.BlockSize / 8);
+
+                                var proc = _aes.CreateEncryptor();
+                                using (var crypto = new CryptoStream(stream, proc, CryptoStreamMode.Write))
+                                {
+                                    crypto.Write(dataToSend, 0, dataToSend.Length);
+                                    crypto.Clear();
+                                    crypto.Close();
+                                }
+                                stream.Close();
+
+                                dataToSendEncoded = stream.ToArray();
+                            }
+                        }
+
+                        dataToSendEncodedWithLength = new byte[sizeof(int) + dataToSendEncoded.Length];
+                        Buffer.BlockCopy(BitConverter.GetBytes(dataToSendEncoded.Length), 0, dataToSendEncodedWithLength, 0, sizeof(int));
+                        Buffer.BlockCopy(dataToSendEncoded, 0, dataToSendEncodedWithLength, sizeof(int), dataToSendEncoded.Length);
+                    }
+
+                    bool timeToPingClients = (DateTime.Now - pingLastTime).Seconds > 5;
                     for (int i = connectedClients.Count - 1; i >= 0; --i) //DO ZOPTYMALIZOWANIA
                     {
-                        System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Focus(); }));
-
-                        try
+                        // PING CLIENT EVERY ~5 SECONDS
+                        if (timeToPingClients)
                         {
-                            connectedClients[i].WriteByte((byte)'T');
-                        }
-                        catch (Exception)
-                        {
-                            connectedClients[i].Dispose();
-                            connectedClients.RemoveAt(i);
-                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientDisconnected);
-                            continue;
-                        }
-                        if (connectedClients[i].DataAvailable)
-                        {
-                            AesCryptoServiceProvider _aes;
-                            _aes = new AesCryptoServiceProvider();
-                            _aes.KeySize = 256;
-                            _aes.BlockSize = 128;
-                            _aes.Padding = PaddingMode.Zeros;
-
-                            String responseData = String.Empty; //string wykorzystywany do przechowywania odebranych tekstów
-
-                            Int32 bytes = connectedClients[i].Read(buffer, 0, buffer.Length); //odczyt danych z bufora
-
-                            Byte[] data = new Byte[bytes];
-                            Array.Copy(buffer, data, bytes);
-                            Byte[] dataDecoded;
-
                             try
                             {
-                                using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
+                                connectedClients[i].networkStream.Write(dataToSendEncodedPingWithLength, 0, dataToSendEncodedPingWithLength.Length);
+                            }
+                            catch (Exception)
+                            {
+                                connectedClients[i].networkStream.Dispose();
+                                connectedClients.RemoveAt(i);
+                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientDisconnected, true);
+                                continue;
+                            }
+                        }
+                        /////////////////////////////////////
+
+                        if (changedLock || connectedClients[i].justConnected)
+                        {
+                            try
+                            {
+                                connectedClients[i].networkStream.Write(dataToSendEncodedWithLength, 0, dataToSendEncodedWithLength.Length);
+                                connectedClients[i].justConnected = false;
+                            }
+                            catch (Exception error)
+                            {
+                                UpdateLog(error.ToString());
+                            }
+                        }
+
+                        if (connectedClients[i].networkStream.DataAvailable)
+                        {
+                            String responseData = String.Empty; //string wykorzystywany do przechowywania odebranych tekstów
+
+                            Int32 bytes = connectedClients[i].networkStream.Read(buffer, 0, buffer.Length); //odczyt danych z bufora
+
+                            for (int position = 0; position < bytes - sizeof(int);)
+                            {
+                                int messageLength = BitConverter.ToInt32(buffer, position);
+                                position += sizeof(int);
+
+                                if (position + messageLength > bytes)
+                                    break; //odebrano niekompletną wiadomość
+
+                                data = new Byte[messageLength];
+                                Buffer.BlockCopy(buffer, position, data, 0, messageLength);
+                                Byte[] dataDecoded = null;
+
+                                position += messageLength;
+
+                                try
                                 {
-                                    using (var MemoryStream = new MemoryStream())
+                                    using (var pass = new PasswordDeriveBytes(password, GenerateSalt(_aes.BlockSize / 8, password)))
                                     {
-                                        _aes.Key = pass.GetBytes(_aes.KeySize / 8);
-                                        _aes.IV = pass.GetBytes(_aes.BlockSize / 8);
-
-                                        var proc = _aes.CreateDecryptor();
-                                        using (var crypto = new CryptoStream(MemoryStream, proc, CryptoStreamMode.Write))
+                                        using (var MemoryStream = new MemoryStream())
                                         {
-                                            crypto.Write(data, 0, data.Length);
-                                            crypto.Clear();
-                                            crypto.Close();
-                                        }
-                                        MemoryStream.Close();
+                                            _aes.Key = pass.GetBytes(_aes.KeySize / 8);
+                                            _aes.IV = pass.GetBytes(_aes.BlockSize / 8);
 
-                                        dataDecoded = MemoryStream.ToArray();
+                                            var proc = _aes.CreateDecryptor();
+                                            using (var crypto = new CryptoStream(MemoryStream, proc, CryptoStreamMode.Write))
+                                            {
+                                                crypto.Write(data, 0, data.Length);
+                                                crypto.Clear();
+                                                crypto.Close();
+                                            }
+                                            MemoryStream.Close();
+
+                                            dataDecoded = MemoryStream.ToArray();
+                                        }
+                                    }
+                                }
+                                catch (Exception error)
+                                {
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.WrongClientPassword + " " + error.ToString());
+
+                                    if (LoggingEnabled)
+                                    {
+                                        StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
+                                        LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                                        LogFile.Close();
+                                    }
+                                    continue;
+                                }
+
+                                if (dataDecoded.Length <= sizeof(CommandsFromClient))
+                                    continue;
+
+                                CommandsFromClient commandFromClient = (CommandsFromClient)BitConverter.ToInt32(dataDecoded, 0); //wyodrębnienie odebranej komendy
+
+                                try
+                                {
+                                    switch (commandFromClient)
+                                    {
+                                        case CommandsFromClient.SEND_TEXT: //odebranie tekstu
+                                            responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, dataDecoded.Length - 4);
+                                            if (responseData == "\n")
+                                                SendKeys.SendWait("{ENTER}");
+                                            else
+                                                SendKeys.SendWait(responseData);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString() + " " + Properties.Resources.Message + " " + responseData);
+                                            break;
+                                        case CommandsFromClient.SEND_BACKSPACE: //odebranie klawisza BACKSPACE
+                                            SendKeys.SendWait("{BACKSPACE}");
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_LEFT_MOUSE: //odebranie lewego przycisku myszy
+                                            mouse_event(
+                                                (uint)(MouseEventFlags.MOVE |
+                                                    MouseEventFlags.LEFTDOWN | MouseEventFlags.LEFTUP),
+                                                0, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_RIGHT_MOUSE: //odebranie prawego przycisku myszy
+                                            mouse_event(
+                                                (uint)(MouseEventFlags.MOVE |
+                                                    MouseEventFlags.RIGHTDOWN | MouseEventFlags.RIGHTUP),
+                                                0, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_LEFT_MOUSE_LONG_PRESS_START:
+                                            mouse_event(
+                                            (uint)(MouseEventFlags.LEFTDOWN),
+                                            0, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_LEFT_MOUSE_LONG_PRESS_STOP:
+                                            mouse_event(
+                                            (uint)(MouseEventFlags.LEFTUP),
+                                            0, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
+                                            double moveX = BitConverter.ToDouble(dataDecoded, 4);
+                                            double moveY = BitConverter.ToDouble(dataDecoded, 12);
+                                            point.X = System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX);
+                                            point.Y = System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY);
+                                            System.Windows.Forms.Cursor.Position = point;
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString() + " " + Properties.Resources.Movement + " " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
+                                            break;
+                                        case CommandsFromClient.SEND_WHEEL_MOUSE: //odebranie polecenia obrócenia rolki myszy
+                                            Int32 mouseWheelSliderValue = BitConverter.ToInt32(dataDecoded, 4);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString() + " mouseWheelSliderValue: " + mouseWheelSliderValue.ToString());
+                                            if (mouseWheelSliderValue < -1 || mouseWheelSliderValue > 1)
+                                            {
+                                                const Int32 wheelCoef = 10;
+                                                mouse_event((uint)MouseEventFlags.WHEEL, 0, 0, (uint)(wheelCoef * mouseWheelSliderValue), 0);
+                                            }
+                                            break;
+                                        case CommandsFromClient.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
+                                            keybd_event((byte)KeyboardEventFlags.NEXT, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_PREVIOUS: //odebranie polecenia odtworzenia poprzedniego utworu
+                                            keybd_event((byte)KeyboardEventFlags.PREV, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_STOP: //odebranie polecenia zatrzymania odtwarzania
+                                            keybd_event((byte)KeyboardEventFlags.STOP, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_PLAYSTOP: //odebranie polecenia wstrzymania/wznowienia odtwarzania
+                                            keybd_event((byte)KeyboardEventFlags.PLAYPAUSE, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_VOLDOWN: //odebranie polecenia podgłośnienia
+                                            keybd_event((byte)KeyboardEventFlags.VOLDOWN, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_VOLUP: //odebranie polecenia ściszenia
+                                            keybd_event((byte)KeyboardEventFlags.VOLUP, 0, 0, 0);
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_OPEN_WEBPAGE:  //odebranie polecenia otwarcia strony internetowej
+                                            System.Diagnostics.Process process = new System.Diagnostics.Process();
+                                            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                                            startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                                            startInfo.FileName = "cmd.exe";
+                                            startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(dataDecoded.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
+                                            process.StartInfo = startInfo;
+                                            process.Start();
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + commandFromClient.ToString());
+                                            break;
+                                        case CommandsFromClient.SEND_PING:
+
+                                            break;
+                                        default:
+                                            UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.UnknownCommand);
+                                            break;
+                                    }
+                                }
+                                catch (Exception error)
+                                {
+                                    UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.WrongClientPassword + " " + error.ToString());
+
+                                    if (LoggingEnabled)
+                                    {
+                                        StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
+                                        LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
+                                        LogFile.Close();
                                     }
                                 }
                             }
-                            catch (Exception error)
-                            {
-                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.WrongClientPassword + " " + error.ToString());
-
-                                if (LoggingEnabled)
-                                {
-                                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
-                                    LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
-                                    LogFile.Close();
-                                }
-                                continue;
-                            }
-
-                            if (dataDecoded.Length == 0)
-                                continue;
-
-                            Commands command = (Commands)BitConverter.ToInt32(dataDecoded, 0); //wyodrębnienie odebranej komendy
-                            try
-                            {
-                                switch (command)
-                                {
-                                    case Commands.SEND_TEXT: //odebranie tekstu
-                                        responseData = System.Text.Encoding.UTF8.GetString(dataDecoded, 4, dataDecoded.Length - 4);
-                                        if (responseData == "\n")
-                                            SendKeys.SendWait("{ENTER}");
-                                        else
-                                            SendKeys.SendWait(responseData);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " " + Properties.Resources.Message + " " + responseData);
-                                        break;
-                                    case Commands.SEND_BACKSPACE: //odebranie klawisza BACKSPACE
-                                        SendKeys.SendWait("{BACKSPACE}");
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_LEFT_MOUSE: //odebranie lewego przycisku myszy
-                                        mouse_event(
-                                            (uint)(MouseEventFlags.MOVE |
-                                                MouseEventFlags.LEFTDOWN | MouseEventFlags.LEFTUP),
-                                            0, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_RIGHT_MOUSE: //odebranie prawego przycisku myszy
-                                        mouse_event(
-                                            (uint)(MouseEventFlags.MOVE |
-                                                MouseEventFlags.RIGHTDOWN | MouseEventFlags.RIGHTUP),
-                                            0, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_LEFT_MOUSE_LONG_PRESS_START:
-                                        mouse_event(
-                                        (uint)(MouseEventFlags.LEFTDOWN),
-                                        0, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_LEFT_MOUSE_LONG_PRESS_STOP:
-                                        mouse_event(
-                                        (uint)(MouseEventFlags.LEFTUP),
-                                        0, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_MOVE_MOUSE: //odebranie przesunięcia kursora TODO: Usunięcie "magic numbers"
-                                        double moveX = BitConverter.ToDouble(dataDecoded, 4);
-                                        double moveY = BitConverter.ToDouble(dataDecoded, 12);
-                                        point.X = System.Windows.Forms.Cursor.Position.X + quadraticFunction(moveX);
-                                        point.Y = System.Windows.Forms.Cursor.Position.Y + quadraticFunction(moveY);
-                                        System.Windows.Forms.Cursor.Position = point;
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " " + Properties.Resources.Movement + " " + quadraticFunction(moveX) + " " + quadraticFunction(moveY));
-                                        break;
-                                    case Commands.SEND_WHEEL_MOUSE: //odebranie polecenia obrócenia rolki myszy
-                                        Int32 mouseWheelSliderValue = BitConverter.ToInt32(dataDecoded, 4);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString() + " mouseWheelSliderValue: " + mouseWheelSliderValue.ToString());
-                                        if (mouseWheelSliderValue < -1 || mouseWheelSliderValue > 1)
-                                        {
-                                            const Int32 wheelCoef = 10;
-                                            mouse_event((uint)MouseEventFlags.WHEEL, 0, 0, (uint)(wheelCoef * mouseWheelSliderValue), 0);
-                                        }
-                                        break;
-                                    case Commands.SEND_NEXT: //odebranie polecenia odtworzenia następnego utworu
-                                        keybd_event((byte)KeyboardEventFlags.NEXT, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_PREVIOUS: //odebranie polecenia odtworzenia poprzedniego utworu
-                                        keybd_event((byte)KeyboardEventFlags.PREV, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_STOP: //odebranie polecenia zatrzymania odtwarzania
-                                        keybd_event((byte)KeyboardEventFlags.STOP, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_PLAYSTOP: //odebranie polecenia wstrzymania/wznowienia odtwarzania
-                                        keybd_event((byte)KeyboardEventFlags.PLAYPAUSE, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_VOLDOWN: //odebranie polecenia podgłośnienia
-                                        keybd_event((byte)KeyboardEventFlags.VOLDOWN, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_VOLUP: //odebranie polecenia ściszenia
-                                        keybd_event((byte)KeyboardEventFlags.VOLUP, 0, 0, 0);
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    case Commands.SEND_OPEN_WEBPAGE:  //odebranie polecenia otwarcia strony internetowej
-                                        System.Diagnostics.Process process = new System.Diagnostics.Process();
-                                        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-                                        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                                        startInfo.FileName = "cmd.exe";
-                                        startInfo.Arguments = "/C explorer \"http://" + Encoding.ASCII.GetString(dataDecoded.Skip(4).ToArray()).Trim('\0') + "\""; //parametr '/C' jest wymagany do prawidłowego działania polecenia
-                                        process.StartInfo = startInfo;
-                                        process.Start();
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.ClientCommand + " " + command.ToString());
-                                        break;
-                                    default:
-                                        UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.UnknownCommand);
-                                        break;
-                                }
-                            }
-                            catch (Exception error)
-                            {
-                                UpdateLog(DateTime.Now.ToString("HH:mm:ss") + " " + Properties.Resources.WrongClientPassword + " " + error.ToString());
-
-                                if (LoggingEnabled)
-                                {
-                                    StreamWriter LogFile = File.CreateText(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Pilot Server\\log.txt");
-                                    LogFile.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + error.ToString());
-                                    LogFile.Close();
-                                }
-                            }
                         }
+                    }
+
+                    if (timeToPingClients)
+                        pingLastTime = DateTime.Now;
+
+                    if (changedLock)
+                    {
+                        PlaybackInfoClass.mediaPropertiesChanged = false;
+                        mediaPropertiesLock = false;
                     }
 
                     Interlocked.Exchange(ref changingConnectedClients, 0);
@@ -510,17 +669,20 @@ namespace ServerApp
                 }
                 else
                 {
+                    PlaybackInfoClass.mediaPropertiesChanged = true;
                     Thread.Sleep(500);
                 }
             }
 
             foreach (var item in connectedClients)
             {
-                item.Dispose();
+                item.networkStream.Dispose();
             }
             connectedClients.Clear();
 
             connectedClientsManagerStopped = true;
+
+            PlaybackInfoClass.Stop();
         }
 
         private void TcpServer()
@@ -530,6 +692,7 @@ namespace ServerApp
 
             while (!connectedClientsManagerStopped) ;
             Thread connectedClientsManagerThread = new Thread(new ThreadStart(ConnectedClientsManager));
+            connectedClientsManagerThread.IsBackground = true;
             connectedClientsManagerThread.Start();
 
             System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { serverStateButton.Content = Properties.Resources.StopServer; }));
@@ -582,7 +745,9 @@ namespace ServerApp
 
                             NetworkStream networkStream = tcpClient.GetStream();
                             networkStream.WriteTimeout = 1000;
-                            connectedClients.Add(networkStream);
+                            ConnectedClient connectedClient = new ConnectedClient();
+                            connectedClient.networkStream = networkStream;
+                            connectedClients.Add(connectedClient);
 
                             Interlocked.Exchange(ref changingConnectedClients, 0);
                         }
@@ -640,21 +805,20 @@ namespace ServerApp
                 }));
         }
 
-        private void UdpServer()
-        {
-
-        }
-
         private void UpdateLog(string newMessage, bool ignoreLogConfiguration = false)
         {
             if (windowLogEnabled || ignoreLogConfiguration)
-                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { logTextBox.Text += newMessage + "\n"; }));
+                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => { 
+                    logTextBox.Text += newMessage + "\n";
+                    logTextBox.Focus();
+                }));
         }
 
         private void logTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             logTextBox.CaretIndex = logTextBox.Text.Length;
             logTextBox.ScrollToEnd();
+            logTextBox.Focus();
         }
 
         private void EnableWindowLogCheckbox_Checked(object sender, RoutedEventArgs e)
